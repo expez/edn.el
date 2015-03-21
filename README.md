@@ -17,16 +17,19 @@ It's available on [melpa](http://melpa.milkbox.net/):
 
 `edn-print-string` will write emacs lisp data structures into edn.
 
-`edn-print-string` takes two keyword options to help with disambiguation when creating sets.  See the [known limitations][#known limitations] section.
+`edn-set-to-list` will turn our internal representation of a set into a list.
+
+`edn-list-to-set` will create a list from our internal representation of a set.
 
 ## Known limitations
 
-Emacs lisp doesn't have have a data structure dedicated to sets.  In emacs lisp, and in other lisps like common lisp, sets are just lists without duplicate elements.  This means that when outputting edn and we encounter a list without duplicates we can't know if we should write a set or not.  There are two solutions to this problem:
+Emacs lisp doesn't have have a data structure dedicated to sets.  In emacs lisp, and in other lisps like common lisp, sets are just lists without duplicate elements.  This means that when outputting edn and we encounter a list without duplicates we can't know if we should write a set or not.  There are three solutions to this problem:
 
 1. Let the user tag the lists that should be turned into sets prior to serialization.
 2. Always create lists, unless the user passes an option to eagerly create sets.
+3. Use our own datastructure to represent sets.
 
-`edn-print-string` takes the following keyword arguments to support these two modes: `eagerly-create-sets` and `set-tag`.  The `set-tag` specifies what tag is used, as the first element of lists, to indicate that it should be printed using a set representation.
+I've chosen to take the third approach.
 
 ## Contribute
 
