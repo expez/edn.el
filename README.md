@@ -1,6 +1,7 @@
 # Edn.el
 
-Edn.el is a library for reading and writing the data format [edn](https://github.com/edn-format/edn) in emacs.
+Edn.el is an emacs lisp library for reading and writing the data
+format [edn](https://github.com/edn-format/edn).
 
 ## Installation
 
@@ -16,21 +17,20 @@ It's available on [melpa](http://melpa.milkbox.net/):
 
 `edn-print-string` will write emacs lisp data structures into edn.
 
+`edn-print-string` takes two keyword options to help with disambiguation when creating sets.  See the [known limitations][#known limitations] section.
+
 ## Known limitations
 
-Emacs lisp doesn't have have a data structure dedicated to sets.  In emacs lisp, and in other lisps like common lisp, sets are just lists without duplicate elements.  This means that when outputting edn and we encounter a list without duplicates we can't know if we should write a set or not.
-
-There are two solutions to this problem:
+Emacs lisp doesn't have have a data structure dedicated to sets.  In emacs lisp, and in other lisps like common lisp, sets are just lists without duplicate elements.  This means that when outputting edn and we encounter a list without duplicates we can't know if we should write a set or not.  There are two solutions to this problem:
 
 1. Let the user tag the lists that should be turned into sets prior to serialization.
 2. Always create lists, unless the user passes an option to eagerly create sets.
 
-`edn-print-string` takes the following keyword arguments to support these two modes: `:eagerly-create-sets` and `:set-tag`
+`edn-print-string` takes the following keyword arguments to support these two modes: `eagerly-create-sets` and `set-tag`.  The `set-tag` specifies what tag is used, as the first element of lists, to indicate that it should be printed using a set representation.
+
 ## Contribute
 
-Please send help!  There is a suite of tests that I'd like you to add
-to whenever a bug is fixed or a new feature is added.  If you don't do
-this I'm likely to break your code when I stumble around the codebase.
+Please do!  There is a suite of tests that I'd like you to add to whenever a bug is fixed or a new feature is added.  If you don't do this I'm likely to break your code when I stumble around the codebase.
 
 To fetch the test dependencies, install [cask](https://github.com/rejeep/cask.el) if you haven't already, then:
 
