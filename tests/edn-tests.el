@@ -21,3 +21,12 @@
 ")))
   (should (null (edn-parse"
   ,, 	"))))
+
+(ert-deftest parses-simple-symbols ()
+  (should (equal 'foo (edn-parse "foo")))
+  (should (equal 'foo\. (edn-parse "foo.")))
+  (should (equal '%foo\. (edn-parse "%foo."))))
+
+(ert-deftest parses-namespaced-symbols ()
+  (should (equal 'foo/bar (edn-parse "foo/bar")))
+  (should-error (edn-parse "/foobar")))

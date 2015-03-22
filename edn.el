@@ -4,7 +4,7 @@
 ;; URL: https://www.github.com/expez/edn.el
 ;; Keywords: edn clojure
 ;; Version: 0.1
-;; Package-Requires: ((cl-lib "0.3") (emacs "24.4") (s "1.9.0"))
+;; Package-Requires: ((cl-lib "0.3") (emacs "24.4") (s "1.9.0") (dash "2.10.0"))
 
 ;; Copyright (c)  2015, Lars Andersen
 
@@ -28,11 +28,31 @@
 
 ;;; Commentary:
 
-;; Support for reading and writing the edn data format from elisp.
+;; Support for reading and writing the edn data format from elisp
 
 ;;; Code:
 
-(defun edn-parse (edn-string))
+(require 's)
+(require 'dash)
+(require 'cl)
+
+(defun edn-parse (edn-string)
+  (first
+   (peg-parse-string
+    ((form (opt ws) (* (or number symbol)))
+     (symbol (substring (or symbol-with-ns symbol-no-ns))
+             `(symbol -- (intern symbol)))
+     (non-numeric (or alpha ["*+!-_?$%&=<>:#."]))
+     (symbol-with-ns non-numeric (* (or non-numeric alphanum)) slash
+                     (+ (or non-numeric alphanum)))
+     (symbol-no-ns non-numeric (+ (or alphanum non-numeric)))
+     (slash "/")
+     (alphanum (or alpha digit))
+     (number (+ digit))
+     (digit [0-9])
+     (alpha [A-z])
+     (ws (or "," "\n" "\t")))
+    edn-string)))
 
 (provide 'edn)
 ;;; edn.el ends here
