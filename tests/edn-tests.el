@@ -37,4 +37,5 @@
 (ert-deftest characters ()
   :tags '(edn characters)
   (should (equal 97 (edn-parse "\\a")))
-  (should (equal 'newline (edn-parse "\newline"))))
+  (should (equal 960 (edn-parse "\\u03C0")))
+  (should (equal 'newline (edn-parse "\\newline"))))

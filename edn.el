@@ -38,17 +38,17 @@
 (require 'peg)
 
 (defun edn--create-char (match)
-  (let* ((c (string-to-char match)))
-    (if (string-equal (char-to-string c) match)
-        c
-      (intern match))))
+  (cond
+   ((string-prefix-p "\u" match) (string-to-char match)) ; unicode chars
+   ((= (length match) 2) (string-to-char (substring match 1))) ; chars like \a
+   (t (intern match)))) ; chars like \newline
 
 (defun edn-parse (edn-string)
   (first
    (peg-parse-string
     ((form _ (opt (or char bool number symbol err)) _)
      (char (substring "\\" (+ alphanum) sep)
-           `(c -- (edn--create-char (substring c 1))))
+           `(c -- (edn--create-char c)))
      (bool (substring (or "true" "false"))
            `(bool -- (when (string-equal bool "true") t)))
      (symbol (substring sep (or slash symbol-with-prefix symbol-no-ns) sep)
