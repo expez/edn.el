@@ -37,10 +37,18 @@
 (require 'cl)
 (require 'peg)
 
+(defun edn--create-char (match)
+  (let* ((c (string-to-char match)))
+    (if (string-equal (char-to-string c) match)
+        c
+      (intern match))))
+
 (defun edn-parse (edn-string)
   (first
    (peg-parse-string
-    ((form (* _) (opt (or bool number symbol err)) (* _))
+    ((form _ (opt (or char bool number symbol err)) _)
+     (char (substring "\\" (+ alphanum) sep)
+           `(c -- (edn--create-char (substring c 1))))
      (bool (substring (or "true" "false"))
            `(bool -- (when (string-equal bool "true") t)))
      (symbol (substring sep (or slash symbol-with-prefix symbol-no-ns) sep)
@@ -55,18 +63,12 @@
      (digit [0-9])
      (alpha [A-z])
      (sep (or ws (bol) (eol)))
-     (_ (or ws comment))
+     (_ (* (or ws comment)))
      (comment (+ ";") (* (any)) (eol))
-     (ws ["\n\t ,"])
+     (eol (or "\n" "\r\n" "\r"))
+     (ws (or ["\t ,"] eol))
      (err (substring (+ (any))) `(s -- (error "Invalid edn: '%s'" s))))
     edn-string)))
-
-(peg-parse-string ((form (or ws err))
-                   (_ (* (or ws comment)))
-                   (comment (+ ";") (not (eol)))
-                   (ws ["\n\t ,"])
-                   (err (substring (+ (any))) `(s -- (error "Invalid edn: '%s'" s))))
-                  ",, ")
 
 (provide 'edn)
 ;;; edn.el ends here

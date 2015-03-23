@@ -15,7 +15,7 @@
   (should (null (edn-parse"
   ,, 	"))))
 
-(ert-deftest symbol ()
+(ert-deftest symbols ()
   :tags '(edn symbol)
   (should (equal 'foo (edn-parse "foo")))
   (should (equal 'foo\. (edn-parse "foo.")))
@@ -33,3 +33,8 @@
   :tags '(edn boolean)
   (should (equal t (edn-parse "true")))
   (should (equal nil (edn-parse "false "))))
+
+(ert-deftest characters ()
+  :tags '(edn characters)
+  (should (equal 97 (edn-parse "\\a")))
+  (should (equal 'newline (edn-parse "\newline"))))
