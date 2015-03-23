@@ -1,34 +1,22 @@
 (require 'ert)
 (require 'edn)
 
-(ert-deftest empty-string ()
+(ert-deftest whitespace ()
   :tags '(edn)
-  (should (null (edn-parse ""))))
-
-(ert-deftest spaces ()
-  :tags '(edn)
+  (should (null (edn-parse "")))
   (should (null (edn-parse " ")))
-  (should (null (edn-parse "   "))))
-
-(ert-deftest tabs ()
-  :tags '(edn)
+  (should (null (edn-parse "   ")))
   (should (null (edn-parse "	")))
-  (should (null (edn-parse "		"))))
-
-(ert-deftest commas ()
-  :tags '(edn)
+  (should (null (edn-parse "		")))
   (should (null (edn-parse ",")))
-  (should (null (edn-parse ",,,,"))))
-
-(ert-deftest only-whitespace ()
-  :tags '(edn)
+  (should (null (edn-parse ",,,,")))
   (should (null (edn-parse "	  , ,
 ")))
   (should (null (edn-parse"
   ,, 	"))))
 
-(ert-deftest symbols ()
-  :tags '(edn)
+(ert-deftest symbol ()
+  :tags '(edn symbol)
   (should (equal 'foo (edn-parse "foo")))
   (should (equal 'foo\. (edn-parse "foo.")))
   (should (equal '%foo\. (edn-parse "%foo.")))
@@ -40,3 +28,8 @@
   (should (equal '.true (edn-parse ".true")))
   (should (equal 'some:sort:of:symbol (edn-parse "some:sort:of:symbol")))
   (equal 'foo-bar (edn-parse "foo-bar")))
+
+(ert-deftest booleans ()
+  :tags '(edn boolean)
+  (should (equal t (edn-parse "true")))
+  (should (equal nil (edn-parse "false "))))

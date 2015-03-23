@@ -40,9 +40,11 @@
 (defun edn-parse (edn-string)
   (first
    (peg-parse-string
-    ((form _ (opt (or number symbol err)) _ (eol))
-     (symbol (substring (or slash symbol-with-prefix symbol-no-ns))
-             `(symbol -- (intern symbol)))
+    ((form (* _) (opt (or bool number symbol err)) (* _))
+     (bool (substring (or "true" "false"))
+           `(bool -- (when (string-equal bool "true") t)))
+     (symbol (substring sep (or slash symbol-with-prefix symbol-no-ns) sep)
+             `(symbol -- (intern (string-trim symbol))))
      (non-numeric (or alpha ["*+!-_?$%&=<>:#."]))
      (symbol-with-prefix non-numeric (* (or non-numeric alphanum)) slash
                          (+ (or non-numeric alphanum)))
@@ -52,9 +54,10 @@
      (number (+ digit))
      (digit [0-9])
      (alpha [A-z])
+     (sep (or ws (bol) (eol)))
      (_ (or ws comment))
      (comment (+ ";") (* (any)) (eol))
-     (ws (* ["\n\t ,"]))
+     (ws ["\n\t ,"])
      (err (substring (+ (any))) `(s -- (error "Invalid edn: '%s'" s))))
     edn-string)))
 
