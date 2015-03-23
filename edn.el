@@ -35,24 +35,35 @@
 (require 's)
 (require 'dash)
 (require 'cl)
+(require 'peg)
 
 (defun edn-parse (edn-string)
   (first
    (peg-parse-string
-    ((form (opt ws) (* (or number symbol)))
-     (symbol (substring (or symbol-with-ns symbol-no-ns))
+    ((form _ (opt (or number symbol err)) _ (eol))
+     (symbol (substring (or slash symbol-with-prefix symbol-no-ns))
              `(symbol -- (intern symbol)))
      (non-numeric (or alpha ["*+!-_?$%&=<>:#."]))
-     (symbol-with-ns non-numeric (* (or non-numeric alphanum)) slash
-                     (+ (or non-numeric alphanum)))
+     (symbol-with-prefix non-numeric (* (or non-numeric alphanum)) slash
+                         (+ (or non-numeric alphanum)))
      (symbol-no-ns non-numeric (+ (or alphanum non-numeric)))
      (slash "/")
      (alphanum (or alpha digit))
      (number (+ digit))
      (digit [0-9])
      (alpha [A-z])
-     (ws (or "," "\n" "\t")))
+     (_ (or ws comment))
+     (comment (+ ";") (* (any)) (eol))
+     (ws (* ["\n\t ,"]))
+     (err (substring (+ (any))) `(s -- (error "Invalid edn: '%s'" s))))
     edn-string)))
+
+(peg-parse-string ((form (or ws err))
+                   (_ (* (or ws comment)))
+                   (comment (+ ";") (not (eol)))
+                   (ws ["\n\t ,"])
+                   (err (substring (+ (any))) `(s -- (error "Invalid edn: '%s'" s))))
+                  ",, ")
 
 (provide 'edn)
 ;;; edn.el ends here
