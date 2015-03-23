@@ -39,33 +39,44 @@
 
 (defun edn--create-char (match)
   (cond
-   ((string-prefix-p "\u" match) (string-to-char match)) ; unicode chars
+   ((string-prefix-p "\\u" match) (string-to-char match)) ; unicode chars
    ((= (length match) 2) (string-to-char (substring match 1))) ; chars like \a
-   (t (intern match)))) ; chars like \newline
+   (t (intern (substring match 1))))) ; chars like \newline
 
 (defun edn-parse (edn-string)
   (first
    (peg-parse-string
-    ((form _ (opt (or char bool number symbol err)) _)
-     (char (substring "\\" (+ alphanum) sep)
+    ((form _ (opt (or elide char bool number symbol err)) _)
+
+     (char (substring char1)
            `(c -- (edn--create-char c)))
-     (bool (substring (or "true" "false"))
+     (char1 "\\" (+ alphanum) sep)
+
+     (bool (substring bool1)
            `(bool -- (when (string-equal bool "true") t)))
-     (symbol (substring sep (or slash symbol-with-prefix symbol-no-ns) sep)
+     (bool1 (or "true" "false"))
+
+     (symbol (substring symbol1)
              `(symbol -- (intern (string-trim symbol))))
-     (non-numeric (or alpha ["*+!-_?$%&=<>:#."]))
-     (symbol-with-prefix non-numeric (* (or non-numeric alphanum)) slash
-                         (+ (or non-numeric alphanum)))
-     (symbol-no-ns non-numeric (+ (or alphanum non-numeric)))
+     (symbol1 (or slash symbol-with-prefix symbol-no-ns) sep)
+     (symbol-constituent (or alphanum ["*+!-_?$%&=<>:#."]))
+     (symbol-start (or alpha ["*+!-_?$%&=<>."]))
      (slash "/")
-     (alphanum (or alpha digit))
-     (number (+ digit))
+     (symbol-with-prefix symbol-start (* symbol-constituent) slash
+                         (+ symbol-constituent))
+     (symbol-no-ns symbol-start (* symbol-constituent))
+
+     (number (substring number1))
+     (number1 (+ digit))
+
      (digit [0-9])
      (alpha [A-z])
+     (alphanum (or alpha digit))
      (sep (or ws (bol) (eol)))
      (_ (* (or ws comment)))
      (comment (+ ";") (* (any)) (eol))
      (eol (or "\n" "\r\n" "\r"))
+     (elide "#_" (* ws) (or char1 bool1 number1 symbol1) sep)
      (ws (or ["\t ,"] eol))
      (err (substring (+ (any))) `(s -- (error "Invalid edn: '%s'" s))))
     edn-string)))

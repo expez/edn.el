@@ -39,3 +39,9 @@
   (should (equal 97 (edn-parse "\\a")))
   (should (equal 960 (edn-parse "\\u03C0")))
   (should (equal 'newline (edn-parse "\\newline"))))
+
+(ert-deftest elision ()
+  :tags '(edn elision)
+  (should-not (edn-parse "#_foo"))
+  (should-not (edn-parse "#_ 123"))
+  (should-not (edn-parse "#_ \\a")))
