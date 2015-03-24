@@ -65,7 +65,7 @@
 (defun edn-parse (edn-string)
   (first
    (peg-parse-string
-    ((form _ (opt (or elide string char bool integer symbol keyword err)) _)
+    ((form _ (opt (or elide string char bool integer float symbol keyword err)) _)
 
      (char (substring char1)
            `(c -- (edn--create-char c)))
@@ -79,7 +79,7 @@
              `(symbol -- (intern (string-trim symbol))))
      (symbol1 (or slash symbol-with-prefix symbol-no-ns) sep)
      (symbol-constituent (or alphanum ["*+!-_?$%&=<>:#."]))
-     (symbol-start (or alpha ["*+!-_?$%&=<>."]))
+     (symbol-start (or alpha ["*!_?$%&=<>."] (and (or "-" "+") (not digit))))
      (slash "/")
      (symbol-with-prefix symbol-start (* symbol-constituent) slash
                          (+ symbol-constituent))
@@ -94,15 +94,26 @@
 
      (string "\"" (substring string-content) "\""
              `(str -- (edn--create-string str)))
-     (string-content (* (or (and "\\") (not "\"")) (any)))
+     (string-content (* (or "\\" (not "\"")) (any)))
      (string1 "\"" string-content "\"")
 
-     (integer (substring integer1 sep)
+     (integer (substring integer1) sep
               `(i -- (string-to-number i)))
      (integer1 (or "+" "-" "")
-               (or [0-9]
-                   (and [1-9] (+ [0-9]))))
+               (or (and [1-9] (* [0-9]))
+                   [0-9]))
 
+     (float (substring float1) sep
+            `(f -- (string-to-number f)))
+
+     (float1 (or (and integer1 "M")
+                 (and integer1 frac exp)
+                 (and integer1 frac)
+                 (and integer1 exp)))
+
+     (frac "." (+ digit))
+     (exp ex (+ digit))
+     (ex (or "e" "E") (opt (or "-" "+")))
 
      (digit [0-9])
      (alpha [A-z])
@@ -111,10 +122,11 @@
      (_ (* (or ws comment)))
      (comment (+ ";") (* (any)) (eol))
      (eol (or "\n" "\r\n" "\r"))
-     (elide "#_" _ (or string1 char1 bool1 symbol1 integer1))
+     (elide "#_" _ (or string1 char1 bool1 symbol1 integer1 float1))
      (ws (or ["\t ,"] eol))
 
-     (unsupported-bignum (substring integer1 "N") sep `(n -- (error "Unsupported bignum: %s" n)))
+     (unsupported-bignum (substring (or float1 integer1) (or "N" "M")) sep
+                         `(n -- (error "Unsupported bignum: %s" n)))
      (err (or unsupported-bignum
               (substring (+ (any)))) `(s -- (error "Invalid edn: '%s'" s))))
     edn-string)))

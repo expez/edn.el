@@ -67,17 +67,19 @@
   (should (equal :\#/:a (edn-parse ":#/:a")))
   (should (equal :\#foo (edn-parse ":#foo"))))
 
-(defmacro testing (what &rest examples)
-  `(ert-deftest ,what ()
-     (tag (edn ,what))
-     ,@(mapcar (lambda (ex)
-                 `(should (equal ,(first ex) ,(second ex))))
-               examples)))
-
-(ert-deftest integers nil
-  (tag '(edn integers))
+(ert-deftest integers ()
+  :tags '(edn integers)
   (should (= 0 (edn-parse "0")))
   (should (= 0 (edn-parse "+0")))
   (should (= 0 (edn-parse "-0")))
   (should (= 100 (edn-parse "100")))
   (should (= -100 (edn-parse "-100"))))
+
+(ert-deftest floats ()
+  :tags '(edn floats)
+  (should (= 12.32 (edn-parse "12.32")))
+  (should (= -12.32 (edn-parse "-12.32")))
+  (should (= 9923.23 (edn-parse "+9923.23")))
+  (should (= 4.5e+044 (edn-parse "45e+43")))
+  (should (= -4.5e-042 (edn-parse "-45e-43")))
+  (should (= 4.5e+044 (edn-parse "45E+43"))))
