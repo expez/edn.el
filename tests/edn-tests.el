@@ -58,3 +58,11 @@
   (should (equal "this is a string \\ that has an escaped backslash"
                  (edn-parse "\"this is a string \\\\ that has an escaped backslash\"")))
   (should (equal "[" (edn-parse "\"[\""))))
+
+(ert-deftest keywords ()
+  :tags '(edn keywords)
+  (should (equal :namespace\.of\.some\.length/keyword-name
+                 (edn-parse ":namespace.of.some.length/keyword-name")))
+  (should (equal :\#/\# (edn-parse ":#/#")))
+  (should (equal :\#/:a (edn-parse ":#/:a")))
+  (should (equal :\#foo (edn-parse ":#foo"))))

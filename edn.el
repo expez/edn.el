@@ -39,7 +39,7 @@
 
 (defun edn--create-char (match)
   (cond
-   ((string-prefix-p "\\u" match) (string-to-char match)) ; unicode chars
+   ((string-prefix-p "\\u" match) (read (format "?%s" match))) ; unicode
    ((= (length match) 2) (string-to-char (substring match 1))) ; chars like \a
    (t (intern (substring match 1))))) ; chars like \newline
 
@@ -65,7 +65,7 @@
 (defun edn-parse (edn-string)
   (first
    (peg-parse-string
-    ((form _ (opt (or elide string char bool number symbol err)) _)
+    ((form _ (opt (or elide string char bool integer symbol keyword err)) _)
 
      (char (substring char1)
            `(c -- (edn--create-char c)))
@@ -85,6 +85,12 @@
                          (+ symbol-constituent))
      (symbol-no-ns symbol-start (* symbol-constituent))
 
+     (keyword (substring keyword1)
+              `(kw -- (intern kw)))
+     (keyword-start ":" (or alphanum ["*+!-_?$%&=<>#."]))
+     (keyword1 keyword-start
+               (or (and (* symbol-constituent) slash (+ symbol-constituent))
+                   (+ symbol-constituent)))
 
      (string "\"" (substring string-content) "\""
              `(str -- (edn--create-string str)))
