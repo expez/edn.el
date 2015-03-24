@@ -66,3 +66,18 @@
   (should (equal :\#/\# (edn-parse ":#/#")))
   (should (equal :\#/:a (edn-parse ":#/:a")))
   (should (equal :\#foo (edn-parse ":#foo"))))
+
+(defmacro testing (what &rest examples)
+  `(ert-deftest ,what ()
+     (tag (edn ,what))
+     ,@(mapcar (lambda (ex)
+                 `(should (equal ,(first ex) ,(second ex))))
+               examples)))
+
+(ert-deftest integers nil
+  (tag '(edn integers))
+  (should (= 0 (edn-parse "0")))
+  (should (= 0 (edn-parse "+0")))
+  (should (= 0 (edn-parse "-0")))
+  (should (= 100 (edn-parse "100")))
+  (should (= -100 (edn-parse "-100"))))

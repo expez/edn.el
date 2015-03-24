@@ -97,8 +97,12 @@
      (string-content (* (or (and "\\") (not "\"")) (any)))
      (string1 "\"" string-content "\"")
 
-     (number (substring number1))
-     (number1 (+ digit))
+     (integer (substring integer1 sep)
+              `(i -- (string-to-number i)))
+     (integer1 (or "+" "-" "")
+               (or [0-9]
+                   (and [1-9] (+ [0-9]))))
+
 
      (digit [0-9])
      (alpha [A-z])
@@ -107,9 +111,12 @@
      (_ (* (or ws comment)))
      (comment (+ ";") (* (any)) (eol))
      (eol (or "\n" "\r\n" "\r"))
-     (elide "#_" _ (or string1 char1 bool1 number1 symbol1) sep)
+     (elide "#_" _ (or string1 char1 bool1 symbol1 integer1))
      (ws (or ["\t ,"] eol))
-     (err (substring (+ (any))) `(s -- (error "Invalid edn: '%s'" s))))
+
+     (unsupported-bignum (substring integer1 "N") sep `(n -- (error "Unsupported bignum: %s" n)))
+     (err (or unsupported-bignum
+              (substring (+ (any)))) `(s -- (error "Invalid edn: '%s'" s))))
     edn-string)))
 
 (provide 'edn)

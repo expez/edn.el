@@ -23,6 +23,7 @@ It's available on [melpa](http://melpa.milkbox.net/):
 
 ## Known limitations
 
+### Set representation
 Emacs lisp doesn't have have a data structure dedicated to sets.  In emacs lisp, and in other lisps like common lisp, sets are just lists without duplicate elements.  This means that when outputting edn and we encounter a list without duplicates we can't know if we should write a set or not.  There are three solutions to this problem:
 
 1. Let the user tag the lists that should be turned into sets prior to serialization.
@@ -30,6 +31,10 @@ Emacs lisp doesn't have have a data structure dedicated to sets.  In emacs lisp,
 3. Use our own datastructure to represent sets.
 
 I've chosen to take the third approach.
+
+### Bignums
+
+Elisp doesn't have support for bignums without pulling in `calc` or an external lib.  For now I've opted to just throw an error when edn containing bignums is put on the input stream.
 
 ## Contribute
 
