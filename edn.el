@@ -66,7 +66,7 @@
   (first
    (peg-parse-string
     ((form _ (opt (or elide value err)) _)
-     (value (or string char bool integer float symbol keyword list))
+     (value (or string char bool integer float symbol keyword list vector))
 
      (char (substring char1)
            `(c -- (edn--create-char c)))
@@ -77,10 +77,12 @@
      (bool1 (or "true" "false"))
 
      (symbol (substring symbol1) (if terminating)
-             `(symbol -- (intern (string-trim symbol))))
+             `(symbol -- (intern symbol)))
      (symbol1 (or slash symbol-with-prefix symbol-no-ns))
-     (symbol-constituent (or alphanum ["*+!-_?$%&=<>:#."]))
-     (symbol-start (or alpha ["*!_?$%&=<>."] (and (or "-" "+") (not digit))))
+     (additional-symbol-chars ["*+!-_?$%&=<>:#."])
+     (symbol-constituent (or alphanum additional-symbol-chars))
+     (symbol-start (or alpha ["*!_?$%&=<>."]
+                       (and (or "-" "+") (or alpha additional-symbol-chars))))
      (slash "/")
      (symbol-with-prefix symbol-start (* symbol-constituent) slash
                          (+ symbol-constituent))
@@ -116,14 +118,20 @@
            (* _ value _ `(tl e -- (setcdr tl (list e)))
               ) _ ")" `(hd tl -- (cdr hd)))
 
+     (vector "[" `(-- (cons nil nil)) `(hd -- hd hd)
+             (* _ value _ `(tl e -- (setcdr tl (list e)))
+                ) _ "]" `(hd tl -- (vconcat (cdr hd))))
+
      (frac "." (+ digit))
      (exp ex (+ digit))
      (ex (or "e" "E") (opt (or "-" "+")))
 
      (digit [0-9])
-     (alpha [A-z])
+     (upper [A-Z])
+     (lower [a-z])
+     (alpha (or lower upper))
      (alphanum (or alpha digit))
-     (terminating (or (set " \n\t();\"'") (eob)))
+     (terminating (or (set " \n\t()[]{}\";") (eob)))
      (_ (* (or ws comment)))
      (comment (+ ";") (* (any)) (eol))
      (eol (or "\n" "\r\n" "\r"))
