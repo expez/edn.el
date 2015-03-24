@@ -83,3 +83,10 @@
   (should (= 4.5e+044 (edn-parse "45e+43")))
   (should (= -4.5e-042 (edn-parse "-45e-43")))
   (should (= 4.5e+044 (edn-parse "45E+43"))))
+
+(ert-deftest lists ()
+  :tags ('edn lists)
+  (should-not (edn-parse "()"))
+  (should (equal '(1 2 3) (edn-parse "( 1 2 3 )")))
+  (should (equal '(12.1 ?a foo :bar) (edn-parse "( 12.1 \\a foo :bar)")))
+  (should (equal '((:foo bar :bar 12)) (edn-parse "((:foo bar :bar 12))"))))
