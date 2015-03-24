@@ -43,10 +43,29 @@
    ((= (length match) 2) (string-to-char (substring match 1))) ; chars like \a
    (t (intern (substring match 1))))) ; chars like \newline
 
+(defun edn--create-string (match)
+  (with-temp-buffer
+    (insert match)
+    (goto-char (point-min))
+    (let ((escaping nil)
+          (escape-char ?\\)
+          s)
+      (while (not (eobp))
+        (if (and (not escaping)
+                 (eq (char-after) escape-char))
+            (setq escaping t)
+          (progn (when escaping
+                   (setq escaping nil)
+                   (when (looking-at "[tnr]")
+                     (push escape-char s)))
+                 (push (char-after) s)))
+        (forward-char))
+      (concat (nreverse s)))))
+
 (defun edn-parse (edn-string)
   (first
    (peg-parse-string
-    ((form _ (opt (or elide char bool number symbol err)) _)
+    ((form _ (opt (or elide string char bool number symbol err)) _)
 
      (char (substring char1)
            `(c -- (edn--create-char c)))
@@ -66,6 +85,12 @@
                          (+ symbol-constituent))
      (symbol-no-ns symbol-start (* symbol-constituent))
 
+
+     (string "\"" (substring string-content) "\""
+             `(str -- (edn--create-string str)))
+     (string-content (* (or (and "\\") (not "\"")) (any)))
+     (string1 "\"" string-content "\"")
+
      (number (substring number1))
      (number1 (+ digit))
 
@@ -76,7 +101,7 @@
      (_ (* (or ws comment)))
      (comment (+ ";") (* (any)) (eol))
      (eol (or "\n" "\r\n" "\r"))
-     (elide "#_" (* ws) (or char1 bool1 number1 symbol1) sep)
+     (elide "#_" _ (or string1 char1 bool1 number1 symbol1) sep)
      (ws (or ["\t ,"] eol))
      (err (substring (+ (any))) `(s -- (error "Invalid edn: '%s'" s))))
     edn-string)))

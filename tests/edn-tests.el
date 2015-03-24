@@ -44,4 +44,17 @@
   :tags '(edn elision)
   (should-not (edn-parse "#_foo"))
   (should-not (edn-parse "#_ 123"))
-  (should-not (edn-parse "#_ \\a")))
+  (should-not (edn-parse "#_ \\a"))
+  (should-not (edn-parse "#_
+\"foo\"")))
+
+(ert-deftest string ()
+  :tags '(edn string)
+  (should (equal "this is a string" (edn-parse "\"this is a string\"")))
+  (should (equal "this has an escaped \"quote in it"
+                 (edn-parse "\"this has an escaped \\\"quote in it\"")))
+  (should (equal "foo\\tbar" (edn-parse "\"foo\\tbar\"")))
+  (should (equal "foo\\nbar" (edn-parse "\"foo\\nbar\"")))
+  (should (equal "this is a string \\ that has an escaped backslash"
+                 (edn-parse "\"this is a string \\\\ that has an escaped backslash\"")))
+  (should (equal "[" (edn-parse "\"[\""))))
