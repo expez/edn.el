@@ -66,7 +66,7 @@
   (first
    (peg-parse-string
     ((form _ (opt (or elide value err)) _)
-     (value (or string char bool integer float symbol keyword list vector))
+     (value (or string char bool integer float symbol keyword list vector map))
 
      (char (substring char1)
            `(c -- (edn--create-char c)))
@@ -121,6 +121,11 @@
      (vector "[" `(-- (cons nil nil)) `(hd -- hd hd)
              (* _ value _ `(tl e -- (setcdr tl (list e)))
                 ) _ "]" `(hd tl -- (vconcat (cdr hd))))
+
+     (map "{" `(-- (make-hash-table :test #'equal))
+          (* _ (or elide value) _ (or elide value) _
+             `(m k v -- (progn (puthash k v m) m))
+             ) _ "}" `(m -- m))
 
      (frac "." (+ digit))
      (exp ex (+ digit))
