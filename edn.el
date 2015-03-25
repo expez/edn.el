@@ -99,6 +99,7 @@
          (s-chop-prefix ":" (symbol-name stringlike)))
         (t (error "Can't convert '%s' to string" stringlike))))
 
+;;;###autoload
 (defun edn-parse (edn-string)
   "Parse one edn value from EDN-STRING."
   (let (discarded)
@@ -193,14 +194,17 @@
                 (substring (+ (any)))) `(s -- (error "Invalid edn: '%s'" s))))
       edn-string))))
 
+;;;###autoload
 (defun edn-list-to-set (l)
   "Turn a list into `edn''s internal set representation"
   (edn--create-set l))
 
+;;;###autoload
 (defun edn-set-to-list (s)
   "Turn `edn''s internal set representation into a list"
   (set-vals set))
 
+;;;###autoload
 (defun edn-add-handler (tag handler)
   "Add a HANDLER function for TAG.
 
@@ -211,6 +215,7 @@ TAG is either a string, symbol or keyword. e.g. :my/cool-handler"
     (error "'%s' isn't a valid handler function!"))
   (puthash (edn--stringlike-to-string tag) handler edn--handlers))
 
+;;;###autoload
 (defun edn-remove-handler (tag)
   "Remove a previously registered handler for TAG. "
   (puthash (puthash (edn--stringlike-to-string tag) nil edn--handlers)))
