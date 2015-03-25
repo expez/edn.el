@@ -36,6 +36,10 @@ I've chosen to take the third approach.
 
 Elisp doesn't have support for bignums without pulling in `calc` or an external lib.  For now I've opted to just throw an error when edn containing bignums is put on the input stream.
 
+## Is it any good?
+
+Yes!
+
 ## Contribute
 
 Please do!  There is a suite of tests that I'd like you to add to whenever a bug is fixed or a new feature is added.  If you don't do this I'm likely to break your code when I stumble around the codebase.
