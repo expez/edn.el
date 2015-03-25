@@ -202,7 +202,7 @@
 ;;;###autoload
 (defun edn-set-to-list (s)
   "Turn `edn''s internal set representation into a list"
-  (set-vals set))
+  (edn-set-vals s))
 
 ;;;###autoload
 (defun edn-add-handler (tag handler)
@@ -219,6 +219,30 @@ TAG is either a string, symbol or keyword. e.g. :my/cool-handler"
 (defun edn-remove-handler (tag)
   "Remove a previously registered handler for TAG. "
   (puthash (puthash (edn--stringlike-to-string tag) nil edn--handlers)))
+
+(defun edn--print-seq (open close values)
+  (concat open (string-join (mapcar #'edn-print-string values) " ") close))
+
+(defun edn--print-hash-map (m)
+  (concat "{"
+          (let ((keys (hash-table-keys m))
+                (content ""))
+            (dolist (k keys)
+              (setq content (concat content " " (edn-print-string k) " "
+                                    (edn-print-string (gethash k m)))))
+            content)
+          "}")))
+
+;;;###autoload
+(defun edn-print-string (datum)
+  (cond
+   ((null datum) "nil")
+   ((edn-set-p datum) (edn--print-seq "#{" "}" (edn-set-to-list datum)))
+   ((listp datum) (edn--print-seq "(" ")" datum))
+   ((vectorp datum) (edn--print-seq "[" "]" datum))
+   ((hash-table-p datum) (edn--print-hash-map datum))
+   ((stringp datum) (concat "\"" datum "\""))
+   (t (format "%s" datum))))
 
 (provide 'edn)
 ;;; edn.el ends here
