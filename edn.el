@@ -78,12 +78,27 @@
       (puthash (pop key-vals) (pop key-vals) m))
     m))
 
+(cl-defstruct
+    (edn-set
+     (:type list)
+     :named
+     (:constructor nil)
+     (:constructor edn--create-set (vals)))
+  vals)
+
+(defun edn-list-to-set (l)
+  (edn--create-set l))
+
+(defun edn-set-to-list (s)
+  (set-vals set))
+
 (defun edn-parse (edn-string)
   (let (discarded)
     (first
      (peg-parse-string
       ((form _ (opt (or elide value err)) _)
-       (value (or string char bool integer float symbol keyword list vector map))
+       (value (or string char bool integer float
+                  symbol keyword list vector map set))
 
        (char (substring "\\" (+ alphanum))
              `(c -- (edn--create-char c)))
@@ -138,6 +153,10 @@
        (map "{" `(-- nil)
             (* _ (or elide value) `(-- (maybe-add-to-list)) `(e _ -- e))
             _ "}" `(l -- (create-hash-table (nreverse l))))
+
+       (set "#{" `(-- nil)
+            (* _ (or elide value) `(-- (maybe-add-to-list)) `(e _ -- e))
+            _ "}" `(l -- (edn-list-to-set (nreverse l))))
 
        (frac "." (+ digit))
        (exp ex (+ digit))

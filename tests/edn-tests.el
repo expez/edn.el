@@ -52,7 +52,9 @@
   (should (equal '(1 3) (edn-parse "(1 #_ 2 3)")))
   (should (equal '[1 2 3 4] (edn-parse "[1 2 #_[4 5 6] 3 4]")))
   (should (map-equal (make-seeded-hash-table :foo :bar)
-                     (edn-parse "{:foo #_elided :bar}"))))
+                     (edn-parse "{:foo #_elided :bar}")))
+  (should (equal (edn-list-to-set '(1 2 3 4))
+                 (edn-parse "#{1 2 #_[1 2 3] 3 #_ (1 2) 4}"))))
 
 (ert-deftest string ()
   :tags '(edn string)
@@ -126,3 +128,9 @@
                      (edn-parse "{ :foo :bar :baz :qux}")))
   (should (map-equal (make-seeded-hash-table 1 "123" 'vector [1 2 3])
                      (edn-parse "{ 1 \"123\" vector [1 2 3]}"))))
+
+(ert-deftest sets ()
+  :tags '(edn sets)
+  (should (edn-set-p (edn-parse "#{}")))
+  (should (equal (edn-list-to-set '(1 2 3)) (edn-parse "#{1 2 3}")))
+  (should (equal (edn-list-to-set '(1 [1 2 3] 3)) (edn-parse "#{1 [1 2 3] 3}"))))
