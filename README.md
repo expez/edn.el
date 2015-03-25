@@ -19,7 +19,7 @@ It's available on [melpa](http://melpa.milkbox.net/):
 
 `edn-set-to-list` will turn our internal representation of a set into a list.
 
-`edn-list-to-set` will create a list from our internal representation of a set.
+`edn-list-to-set` will create our internal representation of a set from a list.
 
 ## Known limitations
 
