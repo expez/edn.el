@@ -88,12 +88,6 @@
      (:constructor edn--create-set (vals)))
   vals)
 
-(defun edn-list-to-set (l)
-  (edn--create-set l))
-
-(defun edn-set-to-list (s)
-  (set-vals set))
-
 (defun edn--create-tagged-value (tag value)
   (-if-let (handler (gethash tag edn--handlers))
       (funcall handler value)
@@ -105,14 +99,8 @@
          (s-chop-prefix ":" (symbol-name stringlike)))
         (t (error "Can't convert '%s' to string" stringlike))))
 
-(defun edn-add-handler (tag handler)
-  (unless (or (stringp tag) (keywordp tag) (symbolp tag))
-    (error "'%s' isn't a string, keyword or symbol!"))
-  (unless (functionp handler)
-    (error "'%s' isn't a valid handler function!"))
-  (puthash (edn--stringlike-to-string tag) handler edn--handlers))
-
 (defun edn-parse (edn-string)
+  "Parse one edn value from EDN-STRING."
   (let (discarded)
     (first
      (peg-parse-string
@@ -204,6 +192,28 @@
        (err (or unsupported-bignum
                 (substring (+ (any)))) `(s -- (error "Invalid edn: '%s'" s))))
       edn-string))))
+
+(defun edn-list-to-set (l)
+  "Turn a list into `edn''s internal set representation"
+  (edn--create-set l))
+
+(defun edn-set-to-list (s)
+  "Turn `edn''s internal set representation into a list"
+  (set-vals set))
+
+(defun edn-add-handler (tag handler)
+  "Add a HANDLER function for TAG.
+
+TAG is either a string, symbol or keyword. e.g. :my/cool-handler"
+  (unless (or (stringp tag) (keywordp tag) (symbolp tag))
+    (error "'%s' isn't a string, keyword or symbol!"))
+  (unless (functionp handler)
+    (error "'%s' isn't a valid handler function!"))
+  (puthash (edn--stringlike-to-string tag) handler edn--handlers))
+
+(defun edn-remove-handler (tag)
+  "Remove a previously registered handler for TAG. "
+  (puthash (puthash (edn--stringlike-to-string tag) nil edn--handlers)))
 
 (provide 'edn)
 ;;; edn.el ends here
