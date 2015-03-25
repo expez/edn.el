@@ -147,3 +147,12 @@
 3]")))
   (should (equal '[valid more items] (edn-parse "[valid;touching trailing comment
  more items]"))))
+
+(edn-add-handler "my/cool-handler" (lambda (val) 1))
+(edn-add-handler :my/other-handler (lambda (val) 2))
+
+(ert-deftest tags ()
+  :tags '(edn tags)
+  (should-error (edn-parse "#my/handler missing"))
+  (should (= 1 (edn-parse "#my/cool-handler missing")))
+  (should (= 2 (edn-parse "#my/other-handler {:foo :bar}"))))

@@ -37,6 +37,8 @@
 (require 'cl)
 (require 'peg)
 
+(defvar edn--handlers (make-hash-table :test #'equal))
+
 (defun edn--create-char (match)
   (cond
    ((string-prefix-p "\\u" match) (read (format "?%s" match))) ; unicode
@@ -62,14 +64,14 @@
         (forward-char))
       (concat (nreverse s)))))
 
-(defun maybe-add-to-list ()
+(defun edn--maybe-add-to-list ()
   (if (not discarded)
       (let ((v (pop peg-stack)))
         (push (cons v (pop peg-stack)) peg-stack))
     (setq discarded nil)
     ::dummy))
 
-(defun create-hash-table (key-vals)
+(defun edn--create-hash-table (key-vals)
   (unless (= (% (length key-vals) 2) 0)
     (error "A map requires an even number of forms!"))
   (let ((m (make-hash-table :test #'equal))
@@ -92,13 +94,31 @@
 (defun edn-set-to-list (s)
   (set-vals set))
 
+(defun edn--create-tagged-value (tag value)
+  (-if-let (handler (gethash tag edn--handlers))
+      (funcall handler value)
+    (error "Don't know how to handle tag '%s'" tag)))
+
+(defun edn--stringlike-to-string (stringlike)
+  (cond ((stringp stringlike) stringlike)
+        ((or (symbolp stringlike) (keywordp stringlike))
+         (s-chop-prefix ":" (symbol-name stringlike)))
+        (t (error "Can't convert '%s' to string" stringlike))))
+
+(defun edn-add-handler (tag handler)
+  (unless (or (stringp tag) (keywordp tag) (symbolp tag))
+    (error "'%s' isn't a string, keyword or symbol!"))
+  (unless (functionp handler)
+    (error "'%s' isn't a valid handler function!"))
+  (puthash (edn--stringlike-to-string tag) handler edn--handlers))
+
 (defun edn-parse (edn-string)
   (let (discarded)
     (first
      (peg-parse-string
       ((form _ (opt (or elide value err)) _)
-       (value (or string char bool integer float
-                  symbol keyword list vector map set))
+       (value (or string char bool integer float symbol keyword list vector map
+                  set tagged-value))
 
        (char (substring "\\" (+ alphanum))
              `(c -- (edn--create-char c)))
@@ -143,20 +163,25 @@
                    (and integer1 exp)))
 
        (list "(" `(-- nil)
-             (* _ (or elide value) _ `(-- (maybe-add-to-list)) `(e _ -- e))
+             (* _ (or elide value) _ `(-- (edn--maybe-add-to-list)) `(e _ -- e))
              ")" `(l -- (nreverse l)))
 
        (vector "[" `(-- nil)
-               (* _ (or elide value) _ `(-- (maybe-add-to-list)) `(e _ -- e))
+               (* _ (or elide value) _ `(-- (edn--maybe-add-to-list)) `(e _ -- e))
                "]" `(l -- (vconcat (nreverse l))))
 
        (map "{" `(-- nil)
-            (* _ (or elide value) _ `(-- (maybe-add-to-list)) `(e _ -- e))
-            "}" `(l -- (create-hash-table (nreverse l))))
+            (* _ (or elide value) _ `(-- (edn--maybe-add-to-list)) `(e _ -- e))
+            "}" `(l -- (edn--create-hash-table (nreverse l))))
 
        (set "#{" `(-- nil)
-            (* _ (or elide value) `(-- (maybe-add-to-list)) `(e _ -- e))
+            (* _ (or elide value) `(-- (edn--maybe-add-to-list)) `(e _ -- e))
             _ "}" `(l -- (edn-list-to-set (nreverse l))))
+
+       (tagged-value "#" (substring alpha (or (and (* symbol-constituent) slash
+                                                   (+ symbol-constituent))
+                                              (* symbol-constituent)))
+                     _ value _ `(tag val -- (edn--create-tagged-value tag val)))
 
        (frac "." (+ digit))
        (exp ex (+ digit))
