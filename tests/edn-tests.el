@@ -13,7 +13,8 @@
   (should (null (edn-parse "	  , ,
 ")))
   (should (null (edn-parse"
-  ,, 	"))))
+  ,, 	")))
+  (should (equal [a b c d] (edn-parse "[a ,,,,,, b,,,,,c ,d]"))))
 
 (ert-deftest symbols ()
   :tags '(edn symbol)
@@ -54,7 +55,9 @@
   (should (map-equal (make-seeded-hash-table :foo :bar)
                      (edn-parse "{:foo #_elided :bar}")))
   (should (equal (edn-list-to-set '(1 2 3 4))
-                 (edn-parse "#{1 2 #_[1 2 3] 3 #_ (1 2) 4}"))))
+                 (edn-parse "#{1 2 #_[1 2 3] 3 #_ (1 2) 4}")))
+  (should (equal [a d] (edn-parse "[a #_ ;we are discarding what comes next
+ c d]"))))
 
 (ert-deftest string ()
   :tags '(edn string)
@@ -134,3 +137,13 @@
   (should (edn-set-p (edn-parse "#{}")))
   (should (equal (edn-list-to-set '(1 2 3)) (edn-parse "#{1 2 3}")))
   (should (equal (edn-list-to-set '(1 [1 2 3] 3)) (edn-parse "#{1 [1 2 3] 3}"))))
+
+(ert-deftest comment ()
+  :tags '(edn comments)
+  (should-not (edn-parse ";nada"))
+  (should (equal 1 (edn-parse ";; comment
+1")))
+  (should (equal [1 2 3] (edn-parse "[1 2 ;comment to eol
+3]")))
+  (should (equal '[valid more items] (edn-parse "[valid;touching trailing comment
+ more items]"))))

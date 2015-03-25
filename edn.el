@@ -143,16 +143,16 @@
                    (and integer1 exp)))
 
        (list "(" `(-- nil)
-             (* _ (or elide value) _ `(-- (maybe-add-to-list)) `(e _ -- e)
-                ) _ ")" `(l -- (nreverse l)))
+             (* _ (or elide value) _ `(-- (maybe-add-to-list)) `(e _ -- e))
+             ")" `(l -- (nreverse l)))
 
        (vector "[" `(-- nil)
-               (* _ (or elide value) _  `(-- (maybe-add-to-list)) `(e _ -- e)
-                  ) _ "]" `(l -- (vconcat (nreverse l))))
+               (* _ (or elide value) _ `(-- (maybe-add-to-list)) `(e _ -- e))
+               "]" `(l -- (vconcat (nreverse l))))
 
        (map "{" `(-- nil)
-            (* _ (or elide value) `(-- (maybe-add-to-list)) `(e _ -- e))
-            _ "}" `(l -- (create-hash-table (nreverse l))))
+            (* _ (or elide value) _ `(-- (maybe-add-to-list)) `(e _ -- e))
+            "}" `(l -- (create-hash-table (nreverse l))))
 
        (set "#{" `(-- nil)
             (* _ (or elide value) `(-- (maybe-add-to-list)) `(e _ -- e))
@@ -167,12 +167,11 @@
        (lower [a-z])
        (alpha (or lower upper))
        (alphanum (or alpha digit))
-       (terminating (or (set " \n\t()[]{}\";") (eob)))
+       (terminating (or (set " \n\t()[]{}\";,") (eob)))
        (_ (* (or ws comment)))
-       (comment (+ ";") (* (any)) (eol))
-       (eol (or "\n" "\r\n" "\r"))
+       (comment ";" (* (not (or "\n" (eob))) (any)))
        (elide "#_" _ value `(-- (setq discarded t)) `(e _ _ -- e))
-       (ws (or ["\t ,"] eol))
+       (ws ["\t \n,"])
 
        (unsupported-bignum (substring (or float1 integer1) (or "N" "M"))
                            terminating
