@@ -85,17 +85,14 @@
       ((form _ (opt (or elide value err)) _)
        (value (or string char bool integer float symbol keyword list vector map))
 
-       (char (substring char1)
+       (char (substring "\\" (+ alphanum))
              `(c -- (edn--create-char c)))
-       (char1 "\\" (+ alphanum))
 
-       (bool (substring bool1)
+       (bool (substring (or "true" "false"))
              `(bool -- (when (string-equal bool "true") t)))
-       (bool1 (or "true" "false"))
 
-       (symbol (substring symbol1) (if terminating)
-               `(symbol -- (intern symbol)))
-       (symbol1 (or slash symbol-with-prefix symbol-no-ns))
+       (symbol (substring (or slash symbol-with-prefix symbol-no-ns))
+               (if terminating) `(symbol -- (intern symbol)))
        (additional-symbol-chars ["*+!-_?$%&=<>:#."])
        (symbol-constituent (or alphanum additional-symbol-chars))
        (symbol-start (or alpha ["*!_?$%&=<>."]
@@ -105,12 +102,12 @@
                            (+ symbol-constituent))
        (symbol-no-ns symbol-start (* symbol-constituent))
 
-       (keyword (substring keyword1) (if terminating)
-                `(kw -- (intern kw)))
+       (keyword (substring keyword-start
+                           (or (and (* symbol-constituent) slash
+                                    (+ symbol-constituent))
+                               (+ symbol-constituent)))
+                (if terminating) `(kw -- (intern kw)))
        (keyword-start ":" (or alphanum ["*+!-_?$%&=<>#."]))
-       (keyword1 keyword-start
-                 (or (and (* symbol-constituent) slash (+ symbol-constituent))
-                     (+ symbol-constituent)))
 
        (string "\"" (substring string-content) "\""
                `(str -- (edn--create-string str)))
@@ -126,8 +123,7 @@
        (float (substring float1) (if terminating)
               `(f -- (string-to-number f)))
 
-       (float1 (or (and integer1 "M")
-                   (and integer1 frac exp)
+       (float1 (or (and integer1 frac exp)
                    (and integer1 frac)
                    (and integer1 exp)))
 
