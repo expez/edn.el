@@ -44,9 +44,15 @@
   :tags '(edn elision)
   (should-not (edn-parse "#_foo"))
   (should-not (edn-parse "#_ 123"))
+  (should-not (edn-parse "#_:foo"))
   (should-not (edn-parse "#_ \\a"))
   (should-not (edn-parse "#_
-\"foo\"")))
+\"foo\""))
+  (should-not (edn-parse "#_ (1 2 3)"))
+  (should (equal '(1 3) (edn-parse "(1 #_ 2 3)")))
+  (should (equal '[1 2 3 4] (edn-parse "[1 2 #_[4 5 6] 3 4]")))
+  (should (map-equal (make-seeded-hash-table :foo :bar)
+                     (edn-parse "{:foo #_elided :bar}"))))
 
 (ert-deftest string ()
   :tags '(edn string)

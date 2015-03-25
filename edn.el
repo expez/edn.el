@@ -62,92 +62,109 @@
         (forward-char))
       (concat (nreverse s)))))
 
+(defun maybe-add-to-list ()
+  (if (not discarded)
+      (let ((v (pop peg-stack)))
+        (push (cons v (pop peg-stack)) peg-stack))
+    (setq discarded nil)
+    ::dummy))
+
+(defun create-hash-table (key-vals)
+  (unless (= (% (length key-vals) 2) 0)
+    (error "A map requires an even number of forms!"))
+  (let ((m (make-hash-table :test #'equal))
+        val)
+    (while key-vals
+      (puthash (pop key-vals) (pop key-vals) m))
+    m))
+
 (defun edn-parse (edn-string)
-  (first
-   (peg-parse-string
-    ((form _ (opt (or elide value err)) _)
-     (value (or string char bool integer float symbol keyword list vector map))
+  (let (discarded)
+    (first
+     (peg-parse-string
+      ((form _ (opt (or elide value err)) _)
+       (value (or string char bool integer float symbol keyword list vector map))
 
-     (char (substring char1)
-           `(c -- (edn--create-char c)))
-     (char1 "\\" (+ alphanum))
+       (char (substring char1)
+             `(c -- (edn--create-char c)))
+       (char1 "\\" (+ alphanum))
 
-     (bool (substring bool1)
-           `(bool -- (when (string-equal bool "true") t)))
-     (bool1 (or "true" "false"))
+       (bool (substring bool1)
+             `(bool -- (when (string-equal bool "true") t)))
+       (bool1 (or "true" "false"))
 
-     (symbol (substring symbol1) (if terminating)
-             `(symbol -- (intern symbol)))
-     (symbol1 (or slash symbol-with-prefix symbol-no-ns))
-     (additional-symbol-chars ["*+!-_?$%&=<>:#."])
-     (symbol-constituent (or alphanum additional-symbol-chars))
-     (symbol-start (or alpha ["*!_?$%&=<>."]
-                       (and (or "-" "+") (or alpha additional-symbol-chars))))
-     (slash "/")
-     (symbol-with-prefix symbol-start (* symbol-constituent) slash
-                         (+ symbol-constituent))
-     (symbol-no-ns symbol-start (* symbol-constituent))
+       (symbol (substring symbol1) (if terminating)
+               `(symbol -- (intern symbol)))
+       (symbol1 (or slash symbol-with-prefix symbol-no-ns))
+       (additional-symbol-chars ["*+!-_?$%&=<>:#."])
+       (symbol-constituent (or alphanum additional-symbol-chars))
+       (symbol-start (or alpha ["*!_?$%&=<>."]
+                         (and (or "-" "+") (or alpha additional-symbol-chars))))
+       (slash "/")
+       (symbol-with-prefix symbol-start (* symbol-constituent) slash
+                           (+ symbol-constituent))
+       (symbol-no-ns symbol-start (* symbol-constituent))
 
-     (keyword (substring keyword1)
-              `(kw -- (intern kw)))
-     (keyword-start ":" (or alphanum ["*+!-_?$%&=<>#."]))
-     (keyword1 keyword-start
-               (or (and (* symbol-constituent) slash (+ symbol-constituent))
-                   (+ symbol-constituent)))
+       (keyword (substring keyword1) (if terminating)
+                `(kw -- (intern kw)))
+       (keyword-start ":" (or alphanum ["*+!-_?$%&=<>#."]))
+       (keyword1 keyword-start
+                 (or (and (* symbol-constituent) slash (+ symbol-constituent))
+                     (+ symbol-constituent)))
 
-     (string "\"" (substring string-content) "\""
-             `(str -- (edn--create-string str)))
-     (string-content (* (or "\\" (not "\"")) (any)))
-     (string1 "\"" string-content "\"")
+       (string "\"" (substring string-content) "\""
+               `(str -- (edn--create-string str)))
+       (string-content (* (or "\\" (not "\"")) (any)))
+       (string1 "\"" string-content "\"")
 
-     (integer (substring integer1) (if terminating)
-              `(i -- (string-to-number i)))
-     (integer1 (or "+" "-" "")
-               (or (and [1-9] (* [0-9]))
-                   [0-9]))
+       (integer (substring integer1) (if terminating)
+                `(i -- (string-to-number i)))
+       (integer1 (or "+" "-" "")
+                 (or (and [1-9] (* [0-9]))
+                     [0-9]))
 
-     (float (substring float1) (if terminating)
-            `(f -- (string-to-number f)))
+       (float (substring float1) (if terminating)
+              `(f -- (string-to-number f)))
 
-     (float1 (or (and integer1 "M")
-                 (and integer1 frac exp)
-                 (and integer1 frac)
-                 (and integer1 exp)))
+       (float1 (or (and integer1 "M")
+                   (and integer1 frac exp)
+                   (and integer1 frac)
+                   (and integer1 exp)))
 
-     (list "(" `(-- (cons nil nil)) `(hd -- hd hd)
-           (* _ value _ `(tl e -- (setcdr tl (list e)))
-              ) _ ")" `(hd tl -- (cdr hd)))
+       (list "(" `(-- nil)
+             (* _ (or elide value) _ `(-- (maybe-add-to-list)) `(e _ -- e)
+                ) _ ")" `(l -- (nreverse l)))
 
-     (vector "[" `(-- (cons nil nil)) `(hd -- hd hd)
-             (* _ value _ `(tl e -- (setcdr tl (list e)))
-                ) _ "]" `(hd tl -- (vconcat (cdr hd))))
+       (vector "[" `(-- nil)
+               (* _ (or elide value) _  `(-- (maybe-add-to-list)) `(e _ -- e)
+                  ) _ "]" `(l -- (vconcat (nreverse l))))
 
-     (map "{" `(-- (make-hash-table :test #'equal))
-          (* _ (or elide value) _ (or elide value) _
-             `(m k v -- (progn (puthash k v m) m))
-             ) _ "}" `(m -- m))
+       (map "{" `(-- nil)
+            (* _ (or elide value) `(-- (maybe-add-to-list)) `(e _ -- e))
+            _ "}" `(l -- (create-hash-table (nreverse l))))
 
-     (frac "." (+ digit))
-     (exp ex (+ digit))
-     (ex (or "e" "E") (opt (or "-" "+")))
+       (frac "." (+ digit))
+       (exp ex (+ digit))
+       (ex (or "e" "E") (opt (or "-" "+")))
 
-     (digit [0-9])
-     (upper [A-Z])
-     (lower [a-z])
-     (alpha (or lower upper))
-     (alphanum (or alpha digit))
-     (terminating (or (set " \n\t()[]{}\";") (eob)))
-     (_ (* (or ws comment)))
-     (comment (+ ";") (* (any)) (eol))
-     (eol (or "\n" "\r\n" "\r"))
-     (elide "#_" _ (or string1 char1 bool1 symbol1 integer1 float1))
-     (ws (or ["\t ,"] eol))
+       (digit [0-9])
+       (upper [A-Z])
+       (lower [a-z])
+       (alpha (or lower upper))
+       (alphanum (or alpha digit))
+       (terminating (or (set " \n\t()[]{}\";") (eob)))
+       (_ (* (or ws comment)))
+       (comment (+ ";") (* (any)) (eol))
+       (eol (or "\n" "\r\n" "\r"))
+       (elide "#_" _ value `(-- (setq discarded t)) `(e _ _ -- e))
+       (ws (or ["\t ,"] eol))
 
-     (unsupported-bignum (substring (or float1 integer1) (or "N" "M")) terminating
-                         `(n -- (error "Unsupported bignum: %s" n)))
-     (err (or unsupported-bignum
-              (substring (+ (any)))) `(s -- (error "Invalid edn: '%s'" s))))
-    edn-string)))
+       (unsupported-bignum (substring (or float1 integer1) (or "N" "M"))
+                           terminating
+                           `(n -- (error "Unsupported bignum: %s" n)))
+       (err (or unsupported-bignum
+                (substring (+ (any)))) `(s -- (error "Invalid edn: '%s'" s))))
+      edn-string))))
 
 (provide 'edn)
 ;;; edn.el ends here
