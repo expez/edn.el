@@ -156,3 +156,12 @@
   (should-error (edn-parse "#my/handler missing"))
   (should (= 1 (edn-parse "#my/cool-handler missing")))
   (should (= 2 (edn-parse "#my/other-handler {:foo :bar}"))))
+
+(ert-deftest roundtrip ()
+  :tags '(edn roundtrip)
+  (let ((data [1 2 3 :foo (4 5) qux "quux"]))
+    (should (equal data (edn-parse (edn-print-string data))))
+    (should (equal (make-seeded-hash-table :foo :bar)
+                   (edn-parse (edn-print-string (make-seeded-hash-table :foo :bar)))))
+    (should (equal (edn-list-to-set '(1 2 3 [3 1.11]))
+                   (edn-parse (edn-print-string '(1 2 3 [3 1.11])))))))
