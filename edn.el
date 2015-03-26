@@ -332,7 +332,9 @@ NAME can be specified to enable calling `edn-remove-writer`''"
    (t (format "%s" datum))))
 
 (defun edn--inst-writer (inst)
-  (format-time-string "#inst \"%Y-%m-%dT%H:%M:%S.52Z\"" (edn-inst-to-time inst)))
+  (format-time-string "#inst \"%Y-%m-%dT%H:%M:%S.52Z\""
+                      (edn-inst-to-time inst)
+                      :utc))
 
 (edn-register-reader :inst #'edn--inst-reader)
 (edn-register-writer #'edn-inst-p #'edn--inst-writer)

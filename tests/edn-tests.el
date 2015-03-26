@@ -178,7 +178,8 @@
          (inst (edn-read inst-str))
          (time (date-to-time "1985-04-12T23:20:50.52Z")))
     (should (edn-inst-p inst))
-    (should (equal time (edn-inst-to-time inst))))))
+    (should (equal time (edn-inst-to-time inst)))
+    (should (equal inst-str (edn-print-string inst))))))
 
 (ert-deftest uuid ()
   :tags '(edn uuid)
