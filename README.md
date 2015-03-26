@@ -66,7 +66,7 @@ Emacs lisp doesn't have have a data structure dedicated to sets.  In emacs lisp,
 
 I've chosen to take the third approach.
 
-### instances in time and UUIDs
+### Time instances and UUIDs
 
 The problem of representation also arises with regard to instants in time and UUIDs.  I've opted to create an internal representation here as well.
 
