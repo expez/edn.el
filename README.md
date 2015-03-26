@@ -13,12 +13,15 @@ It's available on [melpa](http://melpa.milkbox.net/):
 
 ## Examples
 ```elisp
+;;; Reading
 (edn-read "[(:foo bar :bar 12 ) \"foo\"]")
 ;; => [(:foo bar :bar 12 ) "foo"]
 
+;;; Writing
 (edn-print-string [(:foo bar :bar 12 ) \"foo\"])
 ;; => "[(:foo bar :bar 12 ) \"foo\"]"
 
+;;; Using the internal representations
 (edn-set-p (edn-list-to-set '(1 2 3 3)))
 ;; => t
 (edn-set-to-list (edn-list-to-set '(1 2 3 3)))
@@ -34,6 +37,21 @@ It's available on [melpa](http://melpa.milkbox.net/):
 ;; => t
 (edn-uuid-to-string uuid)
 ;; => "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
+
+;;; Custom readers
+(edn-read "#my/handler value")
+;; => error unknown handler
+(edn-register-reader :my/reader (lambda (val) :val))
+(edn-read "#my/handler value")
+;; => :val
+
+;;; Custom writers
+(cl-defstruct my-type (val))
+(edn-print-string (make-my-type :val))
+;; => "[cl-struct-my-type \"val\"]"
+(edn-add-writer #'my-type-p (lambda (v) (concat "#my/value " (my-type-val v))))
+(edn-print-string (make-my-type :val))
+;; => :val
 ```
 
 ## Known limitations

@@ -154,14 +154,14 @@
   (should (= 1 (first val)))
   1)
 
-(edn-add-handler "my/cool-handler" #'test-val-passed-to-handler)
-(edn-add-handler :my/other-handler (lambda (val) 2))
+(edn-register-reader "my/type" #'test-val-passed-to-handler)
+(edn-register-reader :my/other-type (lambda (val) 2))
 
 (ert-deftest tags ()
   :tags '(edn tags)
-  (should-error (edn-read "#my/handler missing"))
-  (should (= 1 (edn-read "#my/cool-handler (1 2)")))
-  (should (= 2 (edn-read "#my/other-handler {:foo :bar}"))))
+  (should-error (edn-read "#my/type value"))
+  (should (= 1 (edn-read "#my/type (1 2)")))
+  (should (= 2 (edn-read "#my/other-type {:foo :bar}"))))
 
 (ert-deftest roundtrip ()
   :tags '(edn roundtrip)
@@ -174,10 +174,11 @@
 
 (ert-deftest inst ()
   :tags '(edn inst)
-  (let ((inst (edn-read "#inst \"1985-04-12T23:20:50.52Z\""))
-        (time (date-to-time "#inst \"1985-04-12T23:20:50.52Z\"")))
+  (let* ((inst-str "#inst \"1985-04-12T23:20:50.52Z\"")
+         (inst (edn-read inst-str))
+         (time (date-to-time "1985-04-12T23:20:50.52Z")))
     (should (edn-inst-p inst))
-    (should (equal time (edn-inst-to-time inst)))))
+    (should (equal time (edn-inst-to-time inst))))))
 
 (ert-deftest uuid ()
   :tags '(edn uuid)

@@ -37,7 +37,8 @@
 (require 'cl)
 (require 'peg)
 
-(defvar edn--handlers (make-hash-table :test #'equal))
+(defvar edn--readers (make-hash-table :test #'equal))
+(defvar edn--writers (list))
 
 (defun edn--create-char (match)
   (cond
@@ -105,9 +106,9 @@
   uuid)
 
 (defun edn--create-tagged-value (tag value)
-  (-if-let (handler (gethash tag edn--handlers))
-      (funcall handler value)
-    (error "Don't know how to handle tag '%s'" tag)))
+  (-if-let (reader (gethash tag edn--readers))
+      (funcall reader value)
+    (error "Don't know how to read tag '%s'" tag)))
 
 (defun edn--stringlike-to-string (stringlike)
   (cond ((stringp stringlike) stringlike)
@@ -214,7 +215,7 @@
     (goto-char (point-min))
     (edn--read)))
 
-(defun edn--inst-handler (date-string)
+(defun edn--inst-reader (date-string)
   (edn-time-to-inst (date-to-time date-string)))
 
 ;;;###autoload
@@ -265,20 +266,37 @@ buffer."
   (edn-set-vals s))
 
 ;;;###autoload
-(defun edn-add-handler (tag handler)
-  "Add a HANDLER function for TAG.
+(defun edn-register-reader (tag reader)
+  "Add a READER function for TAG.
 
-TAG is either a string, symbol or keyword. e.g. :my/cool-handler"
+TAG is either a string, symbol or keyword. e.g. :my/type"
   (unless (or (stringp tag) (keywordp tag) (symbolp tag))
     (error "'%s' isn't a string, keyword or symbol!" tag))
-  (unless (functionp handler)
-    (error "'%s' isn't a valid handler function!" handler))
-  (puthash (edn--stringlike-to-string tag) handler edn--handlers))
+  (unless (functionp reader)
+    (error "'%s' isn't a valid handler function!" reader))
+  (puthash (edn--stringlike-to-string tag) reader edn--readers))
 
 ;;;###autoload
-(defun edn-remove-handler (tag)
+(defun edn-register-writer (pred writer &optional name)
+  "Add a WRITER function for types satisfying PRED.
+
+NAME can be specified to enable calling `edn-remove-writer`''"
+  (unless (functionp writer)
+    (error "'%s' isn't a valid writer function!" handler))
+  (unless (functionp pred)
+    (error "'%s' isn't a valid predicate function!" handler))
+  (push (list :pred pred :writer writer :name name) edn--writers))
+
+;;;###autoload
+(defun edn-remove-reader (tag)
   "Remove a previously registered handler for TAG. "
-  (puthash (puthash (edn--stringlike-to-string tag) nil edn--handlers)))
+  (puthash (puthash (edn--stringlike-to-string tag) nil edn--readers)))
+
+;;;###autoload
+(defun edn-remove-writer (name)
+  "The remove the writer with name NAME."
+  (-remove (lambda (writer-meta) (equal (plist-get writer-meta :name) name))
+           edn--writers))
 
 (defun edn--print-seq (open close values)
   (concat open (string-join (mapcar #'edn-print-string values) " ") close))
@@ -293,10 +311,19 @@ TAG is either a string, symbol or keyword. e.g. :my/cool-handler"
             content
             "}")))
 
+(cl-defun edn--custom-writer-for (datum)
+  (dolist (writer edn--writers)
+    (when (funcall (plist-get writer :pred ) datum)
+      (cl-return (plist-get writer :writer )))))
+
+(defun edn--uuid-writer (uuid)
+  (concat "#uuid " (edn-uuid-to-string uuid)))
+
 ;;;###autoload
 (defun edn-print-string (datum)
   (cond
    ((null datum) "nil")
+   ((edn--custom-writer-for datum) (funcall (edn--custom-writer-for datum) datum))
    ((edn-set-p datum) (edn--print-seq "#{" "}" (edn-set-to-list datum)))
    ((listp datum) (edn--print-seq "(" ")" datum))
    ((vectorp datum) (edn--print-seq "[" "]" datum))
@@ -304,8 +331,13 @@ TAG is either a string, symbol or keyword. e.g. :my/cool-handler"
    ((stringp datum) (concat "\"" datum "\""))
    (t (format "%s" datum))))
 
-(edn-add-handler "inst" #'edn--inst-handler)
-(edn-add-handler "uuid" #'edn-string-to-uuid)
+(defun edn--inst-writer (inst)
+  (format-time-string "#inst \"%Y-%m-%dT%H:%M:%S.52Z\"" (edn-inst-to-time inst)))
+
+(edn-register-reader :inst #'edn--inst-reader)
+(edn-register-writer #'edn-inst-p #'edn--inst-writer)
+(edn-register-reader :uuid #'edn-string-to-uuid)
+(edn-register-writer #'edn-uuid-p #'edn--uuid-writer)
 
 (provide 'edn)
 ;;; edn.el ends here
