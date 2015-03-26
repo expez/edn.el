@@ -178,3 +178,10 @@
         (time (date-to-time "#inst \"1985-04-12T23:20:50.52Z\"")))
     (should (edn-inst-p inst))
     (should (equal time (edn-inst-to-time inst)))))
+
+(ert-deftest uuid ()
+  :tags '(edn uuid)
+  (let* ((str "f81d4fae-7dec-11d0-a765-00a0c91e6bf6")
+         (uuid (edn-read (concat "#uuid \"" str "\""))))
+    (should (edn-uuid-p uuid))
+    (should (equal str (edn-uuid-to-string uuid)))))

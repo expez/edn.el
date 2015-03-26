@@ -96,6 +96,14 @@
      (:constructor edn--create-inst (high low)))
   high low)
 
+(cl-defstruct
+    (edn-uuid
+     (:type list)
+     :named
+     (:constructor nil)
+     (:constructor edn--create-uuid (uuid)))
+  uuid)
+
 (defun edn--create-tagged-value (tag value)
   (-if-let (handler (gethash tag edn--handlers))
       (funcall handler value)
@@ -209,8 +217,6 @@
 (defun edn--inst-handler (date-string)
   (edn-time-to-inst (date-to-time date-string)))
 
-(edn-add-handler "inst" #'edn--inst-handler)
-
 ;;;###autoload
 (defun edn-time-to-inst (time)
   "Turn a TIME, as defined in `time-date', into our internal
@@ -223,6 +229,18 @@ representation of an inst."
   TIME from `time-date.'"
   (assert (edn-inst-p inst) nil "INST has to be of type `edn-inst'")
   (list (edn-inst-high inst) (edn-inst-low inst)))
+
+;;;###autoload
+(defun edn-string-to-uuid (s)
+  "Create our internal representation of a uuid from a string, S,
+containing a uuid."
+  (edn--create-uuid s))
+
+;;;###autoload
+(defun edn-uuid-to-string (uuid)
+  "Turn our internal representation of a UUID into a string."
+  (assert (edn-uuid-p uuid) nil "UUID has to be of type `edn-uuid'")
+  (edn-uuid-uuid uuid))
 
 ;;;###autoload
 (defun edn-read (&optional source)
@@ -252,9 +270,9 @@ buffer."
 
 TAG is either a string, symbol or keyword. e.g. :my/cool-handler"
   (unless (or (stringp tag) (keywordp tag) (symbolp tag))
-    (error "'%s' isn't a string, keyword or symbol!"))
+    (error "'%s' isn't a string, keyword or symbol!" tag))
   (unless (functionp handler)
-    (error "'%s' isn't a valid handler function!"))
+    (error "'%s' isn't a valid handler function!" handler))
   (puthash (edn--stringlike-to-string tag) handler edn--handlers))
 
 ;;;###autoload
@@ -285,6 +303,9 @@ TAG is either a string, symbol or keyword. e.g. :my/cool-handler"
    ((hash-table-p datum) (edn--print-hash-map datum))
    ((stringp datum) (concat "\"" datum "\""))
    (t (format "%s" datum))))
+
+(edn-add-handler "inst" #'edn--inst-handler)
+(edn-add-handler "uuid" #'edn-string-to-uuid)
 
 (provide 'edn)
 ;;; edn.el ends here

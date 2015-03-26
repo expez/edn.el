@@ -28,6 +28,12 @@ It's available on [melpa](http://melpa.milkbox.net/):
 ;; => (7357 47698)
 (edn-inst-p (edn-time-to-inst time))
 ;; => t
+
+(defvar uuid (edn-read "#uuid  \"f81d4fae-7dec-11d0-a765-00a0c91e6bf6\""))
+(edn-uuid-p uuid)
+;; => t
+(edn-uuid-to-string uuid)
+;; => "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
 ```
 
 ## Known limitations
@@ -42,9 +48,9 @@ Emacs lisp doesn't have have a data structure dedicated to sets.  In emacs lisp,
 
 I've chosen to take the third approach.
 
-### Time representation
+### instances in time and UUIDs
 
-The problem of representation also arises with regard to instants in time.  I've opted to create an internal representation for this as well.
+The problem of representation also arises with regard to instants in time and UUIDs.  I've opted to create an internal representation here as well.
 
 ### Bignums
 
