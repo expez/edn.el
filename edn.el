@@ -276,26 +276,26 @@ TAG is either a string, symbol or keyword. e.g. :my/type"
   (puthash (edn--stringlike-to-string tag) reader edn--readers))
 
 ;;;###autoload
-(defun edn-add-writer (pred writer &optional name)
-  "Add a WRITER function for types satisfying PRED.
-
-NAME can be specified to enable calling `edn-remove-writer`''"
+(defun edn-add-writer (pred writer)
+  "Add a WRITER function for types satisfying PRED. "
   (unless (functionp writer)
     (error "'%s' isn't a valid writer function!" handler))
   (unless (functionp pred)
     (error "'%s' isn't a valid predicate function!" handler))
-  (push (list :pred pred :writer writer :name name) edn--writers))
+  (push (list :pred pred :writer writer) edn--writers))
 
 ;;;###autoload
 (defun edn-remove-reader (tag)
-  "Remove a previously registered handler for TAG. "
+  "Remove a previously registered handler for TAG."
   (puthash (puthash (edn--stringlike-to-string tag) nil edn--readers)))
 
 ;;;###autoload
-(defun edn-remove-writer (name)
-  "The remove the writer with name NAME."
-  (-remove (lambda (writer-meta) (equal (plist-get writer-meta :name) name))
-           edn--writers))
+(defun edn-remove-writer (writer)
+  "The remove the writer WRITER."
+  (setq edn--writers
+        (-remove (lambda (writer-meta)
+                   (function-equal writer (plist-get writer-meta :writer)))
+                 edn--writers)))
 
 (defun edn--print-seq (open close values)
   (concat open (string-join (mapcar #'edn-print-string values) " ") close))
