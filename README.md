@@ -41,7 +41,7 @@ It's available on [melpa](http://melpa.milkbox.net/):
 ;;; Custom readers
 (edn-read "#my/handler value")
 ;; => error unknown handler
-(edn-register-reader :my/reader (lambda (val) :val))
+(edn-add-reader :my/reader (lambda (val) :val))
 (edn-read "#my/handler value")
 ;; => :val
 

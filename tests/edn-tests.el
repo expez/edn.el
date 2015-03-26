@@ -154,8 +154,8 @@
   (should (= 1 (first val)))
   1)
 
-(edn-register-reader "my/type" #'test-val-passed-to-handler)
-(edn-register-reader :my/other-type (lambda (val) 2))
+(edn-add-reader "my/type" #'test-val-passed-to-handler)
+(edn-add-reader :my/other-type (lambda (val) 2))
 
 (ert-deftest tags ()
   :tags '(edn tags)

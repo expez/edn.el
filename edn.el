@@ -266,7 +266,7 @@ buffer."
   (edn-set-vals s))
 
 ;;;###autoload
-(defun edn-register-reader (tag reader)
+(defun edn-add-reader (tag reader)
   "Add a READER function for TAG.
 
 TAG is either a string, symbol or keyword. e.g. :my/type"
@@ -277,7 +277,7 @@ TAG is either a string, symbol or keyword. e.g. :my/type"
   (puthash (edn--stringlike-to-string tag) reader edn--readers))
 
 ;;;###autoload
-(defun edn-register-writer (pred writer &optional name)
+(defun edn-add-writer (pred writer &optional name)
   "Add a WRITER function for types satisfying PRED.
 
 NAME can be specified to enable calling `edn-remove-writer`''"
@@ -336,10 +336,10 @@ NAME can be specified to enable calling `edn-remove-writer`''"
                       (edn-inst-to-time inst)
                       :utc))
 
-(edn-register-reader :inst #'edn--inst-reader)
-(edn-register-writer #'edn-inst-p #'edn--inst-writer)
-(edn-register-reader :uuid #'edn-string-to-uuid)
-(edn-register-writer #'edn-uuid-p #'edn--uuid-writer)
+(edn-add-reader :inst #'edn--inst-reader)
+(edn-add-writer #'edn-inst-p #'edn--inst-writer)
+(edn-add-reader :uuid #'edn-string-to-uuid)
+(edn-add-writer #'edn-uuid-p #'edn--uuid-writer)
 
 (provide 'edn)
 ;;; edn.el ends here
