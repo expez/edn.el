@@ -4,7 +4,7 @@
 ;; URL: https://www.github.com/expez/edn.el
 ;; Keywords: edn clojure
 ;; Version: 0.1
-;; Package-Requires: ((cl-lib "0.3") (emacs "24.4") (s "1.9.0") (dash "2.10.0"))
+;; Package-Requires: ((cl-lib "0.3") (emacs "24.4") (dash "2.10.0"))
 
 ;; Copyright (c)  2015, Lars Andersen
 
@@ -32,7 +32,6 @@
 
 ;;; Code:
 
-(require 's)
 (require 'dash)
 (require 'cl)
 (require 'peg)
@@ -112,8 +111,8 @@
 
 (defun edn--stringlike-to-string (stringlike)
   (cond ((stringp stringlike) stringlike)
-        ((or (symbolp stringlike) (keywordp stringlike))
-         (s-chop-prefix ":" (symbol-name stringlike)))
+        ((keywordp stringlike) (substring (symbol-name stringlike) 1))
+        ((symbolp stringlike) (symbol-name stringlike))
         (t (error "Can't convert '%s' to string" stringlike))))
 
 (defun edn--read ()
