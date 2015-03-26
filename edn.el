@@ -88,6 +88,14 @@
      (:constructor edn--create-set (vals)))
   vals)
 
+(cl-defstruct
+    (edn-inst
+     (:type list)
+     :named
+     (:constructor nil)
+     (:constructor edn--create-inst (high low)))
+  high low)
+
 (defun edn--create-tagged-value (tag value)
   (-if-let (handler (gethash tag edn--handlers))
       (funcall handler value)
@@ -197,6 +205,24 @@
     (insert str)
     (goto-char (point-min))
     (edn--read)))
+
+(defun edn--inst-handler (date-string)
+  (edn-time-to-inst (date-to-time date-string)))
+
+(edn-add-handler "inst" #'edn--inst-handler)
+
+;;;###autoload
+(defun edn-time-to-inst (time)
+  "Turn a TIME, as defined in `time-date', into our internal
+representation of an inst."
+  (edn--create-inst (first time) (second time)))
+
+;;;###autoload
+(defun edn-inst-to-time (inst)
+  "Turn our internal representation of an instant in time into a
+  TIME from `time-date.'"
+  (assert (edn-inst-p inst) nil "INST has to be of type `edn-inst'")
+  (list (edn-inst-high inst) (edn-inst-low inst)))
 
 ;;;###autoload
 (defun edn-read (&optional source)

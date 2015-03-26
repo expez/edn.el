@@ -11,19 +11,43 @@ It's available on [melpa](http://melpa.milkbox.net/):
 
     M-x package-install edn
 
-## Usage
+## Examples
 
-`edn-read` will read a string of edn into emacs lisp structures or the next edn form at point in the current buffer.
+`edn-read` will read edn from a string or the next edn-form after `point`.
 
-`edn-print-string` will write emacs lisp data structures as edn.
+```elisp
+(edn-read "[(:foo bar :bar 12 ) \"foo\"]")
+;; => [(:foo bar :bar 12 ) "foo"]
+```
 
-`edn-set-to-list` will turn our internal representation of a set into a list.
+
+```elisp
+(edn-print-string [(:foo bar :bar 12 ) \"foo\"])
+;; => "[(:foo bar :bar 12 ) \"foo\"]"
+```
 
 `edn-list-to-set` will create our internal representation of a set from a list.
+`edn-set-to-list` will turn our internal representation of a set into a list.
+```elisp
+(edn-set-to-list (edn-list-to-set '(1 2 3 3)))
+;; => (1 2 3)
+(edn-set-p (edn-list-to-set '(1 2 3 3)))
+;; => t
+```
+
+`edn-time-to-inst` will create our own representation of an instant in time from the representation found `time-date.el`
+`edn-inst-to-time` will turn our internal representation of an instant in time into the representation found in `time-date.el`
+```elisp
+(defvar time (edn-inst-to-time (edn-read "#inst \"1985-04-12T23:20:50.52Z\"")))
+;; => (7357 47698)
+(edn-inst-p (edn-time-to-inst time))
+;; => t
+```
 
 ## Known limitations
 
 ### Set representation
+
 Emacs lisp doesn't have have a data structure dedicated to sets.  In emacs lisp, and in other lisps like common lisp, sets are just lists without duplicate elements.  This means that when outputting edn and we encounter a list without duplicates we can't know if we should write a set or not.  There are three solutions to this problem:
 
 1. Let the user tag the lists that should be turned into sets prior to serialization.
@@ -31,6 +55,10 @@ Emacs lisp doesn't have have a data structure dedicated to sets.  In emacs lisp,
 3. Use our own datastructure to represent sets.
 
 I've chosen to take the third approach.
+
+### Time representation
+
+The problem of representation also arises with regard to instants in time.  I've opted to create an internal representation for this as well.
 
 ### Bignums
 

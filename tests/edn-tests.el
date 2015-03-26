@@ -171,3 +171,10 @@
                        (edn-read (edn-print-string (make-seeded-hash-table :foo :bar)))))
     (should (equal (edn-list-to-set '(1 2 3 [3 1.11]))
                    (edn-read (edn-print-string (edn-list-to-set '(1 2 3 [3 1.11]))))))))
+
+(ert-deftest inst ()
+  :tags '(edn inst)
+  (let ((inst (edn-read "#inst \"1985-04-12T23:20:50.52Z\""))
+        (time (date-to-time "#inst \"1985-04-12T23:20:50.52Z\"")))
+    (should (edn-inst-p inst))
+    (should (equal time (edn-inst-to-time inst)))))
