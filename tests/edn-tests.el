@@ -148,7 +148,13 @@
   (should (equal '[valid more items] (edn-read "[valid;touching trailing comment
  more items]"))))
 
-(edn-add-handler "my/cool-handler" (lambda (val) 1))
+(defun test-val-passed-to-handler (val)
+  (should (listp val))
+  (should (= (length val) 2))
+  (should (= 1 (first val)))
+  1)
+
+(edn-add-handler "my/cool-handler" #'test-val-passed-to-handler)
 (edn-add-handler :my/other-handler (lambda (val) 2))
 
 (ert-deftest tags ()
