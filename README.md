@@ -12,32 +12,18 @@ It's available on [melpa](http://melpa.milkbox.net/):
     M-x package-install edn
 
 ## Examples
-
-`edn-read` will read edn from a string or the next edn-form after `point`.
-
 ```elisp
 (edn-read "[(:foo bar :bar 12 ) \"foo\"]")
 ;; => [(:foo bar :bar 12 ) "foo"]
-```
 
-
-```elisp
 (edn-print-string [(:foo bar :bar 12 ) \"foo\"])
 ;; => "[(:foo bar :bar 12 ) \"foo\"]"
-```
 
-`edn-list-to-set` will create our internal representation of a set from a list.
-`edn-set-to-list` will turn our internal representation of a set into a list.
-```elisp
-(edn-set-to-list (edn-list-to-set '(1 2 3 3)))
-;; => (1 2 3)
 (edn-set-p (edn-list-to-set '(1 2 3 3)))
 ;; => t
-```
+(edn-set-to-list (edn-list-to-set '(1 2 3 3)))
+;; => (1 2 3)
 
-`edn-time-to-inst` will create our own representation of an instant in time from the representation found `time-date.el`
-`edn-inst-to-time` will turn our internal representation of an instant in time into the representation found in `time-date.el`
-```elisp
 (defvar time (edn-inst-to-time (edn-read "#inst \"1985-04-12T23:20:50.52Z\"")))
 ;; => (7357 47698)
 (edn-inst-p (edn-time-to-inst time))
