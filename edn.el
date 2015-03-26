@@ -219,21 +219,18 @@
 
 ;;;###autoload
 (defun edn-time-to-inst (time)
-  "Turn a TIME, as defined in `time-date', into our internal
-representation of an inst."
+  "Turn a `time-date' TIME into our internal representation of an inst."
   (edn--create-inst (first time) (second time)))
 
 ;;;###autoload
 (defun edn-inst-to-time (inst)
-  "Turn our internal representation of an instant in time into a
-  TIME from `time-date.'"
+  "Turn an `edn-inst', INST, into a TIME from `time-date'."
   (assert (edn-inst-p inst) nil "INST has to be of type `edn-inst'")
   (list (edn-inst-high inst) (edn-inst-low inst)))
 
 ;;;###autoload
 (defun edn-string-to-uuid (s)
-  "Create our internal representation of a uuid from a string, S,
-containing a uuid."
+  "Create an `edn-uuid' from a string, S, containing a uuid."
   (edn--create-uuid s))
 
 ;;;###autoload
@@ -248,7 +245,10 @@ containing a uuid."
 
 SOURCE is either a string of edn data or nil.  If no source is
 given the next edn value will be read from POINT in the current
-buffer."
+buffer.
+
+You can use `edn-add-reader' to add your own readers for unknown
+tags."
   (cond
    ((null source) (edn--read))
    ((stringp source) (edn--read-from-string source))
@@ -256,12 +256,12 @@ buffer."
 
 ;;;###autoload
 (defun edn-list-to-set (l)
-  "Turn a list into `edn''s internal set representation"
+  "Turn a list into `edn''s internal set representation."
   (edn--create-set l))
 
 ;;;###autoload
 (defun edn-set-to-list (s)
-  "Turn `edn''s internal set representation into a list"
+  "Turn `edn''s internal set representation into a list."
   (edn-set-vals s))
 
 ;;;###autoload
@@ -277,7 +277,7 @@ TAG is either a string, symbol or keyword. e.g. :my/type"
 
 ;;;###autoload
 (defun edn-add-writer (pred writer)
-  "Add a WRITER function for types satisfying PRED. "
+  "Add a WRITER function for types satisfying PRED."
   (unless (functionp writer)
     (error "'%s' isn't a valid writer function!" handler))
   (unless (functionp pred)
@@ -320,6 +320,10 @@ TAG is either a string, symbol or keyword. e.g. :my/type"
 
 ;;;###autoload
 (defun edn-print-string (datum)
+  "Serialize the lisp form DATUM into edn.
+
+You can use `edn-add-writer' to add writers capable of writing
+your own tagged data."
   (cond
    ((null datum) "nil")
    ((edn--custom-writer-for datum) (funcall (edn--custom-writer-for datum) datum))
