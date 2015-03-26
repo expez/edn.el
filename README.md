@@ -13,9 +13,9 @@ It's available on [melpa](http://melpa.milkbox.net/):
 
 ## Usage
 
-`edn-parse` will read a string of edn into emacs lisp structures.
+`edn-read` will read a string of edn into emacs lisp structures or the next edn form at point in the current buffer.
 
-`edn-print-string` will write emacs lisp data structures into edn.
+`edn-print-string` will write emacs lisp data structures as edn.
 
 `edn-set-to-list` will turn our internal representation of a set into a list.
 

@@ -99,100 +99,116 @@
          (s-chop-prefix ":" (symbol-name stringlike)))
         (t (error "Can't convert '%s' to string" stringlike))))
 
-;;;###autoload
-(defun edn-parse (edn-string)
-  "Parse one edn value from EDN-STRING."
+(defun edn--read ()
   (let (discarded)
     (first
-     (peg-parse-string
-      ((form _ (opt (or elide value err)) _)
-       (value (or string char bool integer float symbol keyword list vector map
-                  set tagged-value))
+     (peg-parse
+      (form _ (opt (or elide value err)) _)
+      (value (or string char bool integer float symbol keyword list vector map
+                 set tagged-value))
 
-       (char (substring "\\" (+ alphanum))
-             `(c -- (edn--create-char c)))
+      (char (substring "\\" (+ alphanum))
+            `(c -- (edn--create-char c)))
 
-       (bool (substring (or "true" "false"))
-             `(bool -- (when (string-equal bool "true") t)))
+      (bool (substring (or "true" "false"))
+            `(bool -- (when (string-equal bool "true") t)))
 
-       (symbol (substring (or slash symbol-with-prefix symbol-no-ns))
-               (if terminating) `(symbol -- (intern symbol)))
-       (additional-symbol-chars ["*+!-_?$%&=<>:#."])
-       (symbol-constituent (or alphanum additional-symbol-chars))
-       (symbol-start (or alpha ["*!_?$%&=<>."]
-                         (and (or "-" "+") (or alpha additional-symbol-chars))))
-       (slash "/")
-       (symbol-with-prefix symbol-start (* symbol-constituent) slash
-                           (+ symbol-constituent))
-       (symbol-no-ns symbol-start (* symbol-constituent))
+      (symbol (substring (or slash symbol-with-prefix symbol-no-ns))
+              (if terminating) `(symbol -- (intern symbol)))
+      (additional-symbol-chars ["*+!-_?$%&=<>:#."])
+      (symbol-constituent (or alphanum additional-symbol-chars))
+      (symbol-start (or alpha ["*!_?$%&=<>."]
+                        (and (or "-" "+") (or alpha additional-symbol-chars))))
+      (slash "/")
+      (symbol-with-prefix symbol-start (* symbol-constituent) slash
+                          (+ symbol-constituent))
+      (symbol-no-ns symbol-start (* symbol-constituent))
 
-       (keyword (substring keyword-start
-                           (or (and (* symbol-constituent) slash
-                                    (+ symbol-constituent))
-                               (+ symbol-constituent)))
-                (if terminating) `(kw -- (intern kw)))
-       (keyword-start ":" (or alphanum ["*+!-_?$%&=<>#."]))
+      (keyword (substring keyword-start
+                          (or (and (* symbol-constituent) slash
+                                   (+ symbol-constituent))
+                              (+ symbol-constituent)))
+               (if terminating) `(kw -- (intern kw)))
+      (keyword-start ":" (or alphanum ["*+!-_?$%&=<>#."]))
 
-       (string "\"" (substring string-content) "\""
-               `(str -- (edn--create-string str)))
-       (string-content (* (or "\\" (not "\"")) (any)))
-       (string1 "\"" string-content "\"")
+      (string "\"" (substring string-content) "\""
+              `(str -- (edn--create-string str)))
+      (string-content (* (or "\\" (not "\"")) (any)))
+      (string1 "\"" string-content "\"")
 
-       (integer (substring integer1) (if terminating)
-                `(i -- (string-to-number i)))
-       (integer1 (or "+" "-" "")
-                 (or (and [1-9] (* [0-9]))
-                     [0-9]))
+      (integer (substring integer1) (if terminating)
+               `(i -- (string-to-number i)))
+      (integer1 (or "+" "-" "")
+                (or (and [1-9] (* [0-9]))
+                    [0-9]))
 
-       (float (substring float1) (if terminating)
-              `(f -- (string-to-number f)))
+      (float (substring float1) (if terminating)
+             `(f -- (string-to-number f)))
 
-       (float1 (or (and integer1 frac exp)
-                   (and integer1 frac)
-                   (and integer1 exp)))
+      (float1 (or (and integer1 frac exp)
+                  (and integer1 frac)
+                  (and integer1 exp)))
 
-       (list "(" `(-- nil)
-             (* _ (or elide value) _ `(-- (edn--maybe-add-to-list)) `(e _ -- e))
-             ")" `(l -- (nreverse l)))
-
-       (vector "[" `(-- nil)
-               (* _ (or elide value) _ `(-- (edn--maybe-add-to-list)) `(e _ -- e))
-               "]" `(l -- (vconcat (nreverse l))))
-
-       (map "{" `(-- nil)
+      (list "(" `(-- nil)
             (* _ (or elide value) _ `(-- (edn--maybe-add-to-list)) `(e _ -- e))
-            "}" `(l -- (edn--create-hash-table (nreverse l))))
+            ")" `(l -- (nreverse l)))
 
-       (set "#{" `(-- nil)
-            (* _ (or elide value) `(-- (edn--maybe-add-to-list)) `(e _ -- e))
-            _ "}" `(l -- (edn-list-to-set (nreverse l))))
+      (vector "[" `(-- nil)
+              (* _ (or elide value) _ `(-- (edn--maybe-add-to-list)) `(e _ -- e))
+              "]" `(l -- (vconcat (nreverse l))))
 
-       (tagged-value "#" (substring alpha (or (and (* symbol-constituent) slash
-                                                   (+ symbol-constituent))
-                                              (* symbol-constituent)))
-                     _ value _ `(tag val -- (edn--create-tagged-value tag val)))
+      (map "{" `(-- nil)
+           (* _ (or elide value) _ `(-- (edn--maybe-add-to-list)) `(e _ -- e))
+           "}" `(l -- (edn--create-hash-table (nreverse l))))
 
-       (frac "." (+ digit))
-       (exp ex (+ digit))
-       (ex (or "e" "E") (opt (or "-" "+")))
+      (set "#{" `(-- nil)
+           (* _ (or elide value) `(-- (edn--maybe-add-to-list)) `(e _ -- e))
+           _ "}" `(l -- (edn-list-to-set (nreverse l))))
 
-       (digit [0-9])
-       (upper [A-Z])
-       (lower [a-z])
-       (alpha (or lower upper))
-       (alphanum (or alpha digit))
-       (terminating (or (set " \n\t()[]{}\";,") (eob)))
-       (_ (* (or ws comment)))
-       (comment ";" (* (not (or "\n" (eob))) (any)))
-       (elide "#_" _ value `(-- (setq discarded t)) `(e _ _ -- e))
-       (ws ["\t \n,"])
+      (tagged-value "#" (substring alpha (or (and (* symbol-constituent) slash
+                                                  (+ symbol-constituent))
+                                             (* symbol-constituent)))
+                    _ value _ `(tag val -- (edn--create-tagged-value tag val)))
 
-       (unsupported-bignum (substring (or float1 integer1) (or "N" "M"))
-                           terminating
-                           `(n -- (error "Unsupported bignum: %s" n)))
-       (err (or unsupported-bignum
-                (substring (+ (any)))) `(s -- (error "Invalid edn: '%s'" s))))
-      edn-string))))
+      (frac "." (+ digit))
+      (exp ex (+ digit))
+      (ex (or "e" "E") (opt (or "-" "+")))
+
+      (digit [0-9])
+      (upper [A-Z])
+      (lower [a-z])
+      (alpha (or lower upper))
+      (alphanum (or alpha digit))
+      (terminating (or (set " \n\t()[]{}\";,") (eob)))
+      (_ (* (or ws comment)))
+      (comment ";" (* (not (or "\n" (eob))) (any)))
+      (elide "#_" _ value `(-- (setq discarded t)) `(e _ _ -- e))
+      (ws ["\t \n,"])
+
+      (unsupported-bignum (substring (or float1 integer1) (or "N" "M"))
+                          terminating
+                          `(n -- (error "Unsupported bignum: %s" n)))
+      (err (or unsupported-bignum
+               (substring (+ (any)))) `(s -- (error "Invalid edn: '%s'" s)))))))
+
+(defun edn--read-from-string (str)
+  (with-current-buffer (get-buffer-create "*edn*")
+    (delete-region (point-min) (point-max))
+    (insert str)
+    (goto-char (point-min))
+    (edn--read)))
+
+;;;###autoload
+(defun edn-read (&optional source)
+  "Read one edn value from SOURCE.
+
+SOURCE is either a string of edn data or nil.  If no source is
+given the next edn value will be read from POINT in the current
+buffer."
+  (cond
+   ((null source) (edn--read))
+   ((stringp source) (edn--read-from-string source))
+   (t (error "Invalid source!"))))
 
 ;;;###autoload
 (defun edn-list-to-set (l)
@@ -224,14 +240,14 @@ TAG is either a string, symbol or keyword. e.g. :my/cool-handler"
   (concat open (string-join (mapcar #'edn-print-string values) " ") close))
 
 (defun edn--print-hash-map (m)
-  (concat "{"
-          (let ((keys (hash-table-keys m))
-                (content ""))
+  (let ((keys (hash-table-keys m))
+        (content ""))
+    (concat "{"
             (dolist (k keys)
               (setq content (concat content " " (edn-print-string k) " "
                                     (edn-print-string (gethash k m)))))
-            content)
-          "}")))
+            content
+            "}")))
 
 ;;;###autoload
 (defun edn-print-string (datum)
