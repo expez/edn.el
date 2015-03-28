@@ -284,9 +284,9 @@ TAG is either a string, symbol or keyword. e.g. :my/type"
 (defun edn-add-writer (pred writer)
   "Add a WRITER function for types satisfying PRED."
   (unless (functionp writer)
-    (error "'%s' isn't a valid writer function!" handler))
+    (error "'%s' isn't a valid writer function!" writer))
   (unless (functionp pred)
-    (error "'%s' isn't a valid predicate function!" handler))
+    (error "'%s' isn't a valid predicate function!" writer))
   (push (list :pred pred :writer writer) edn--writers))
 
 ;;;###autoload
