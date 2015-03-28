@@ -15,6 +15,7 @@ before_install:
   - export PATH="/home/travis/.cask/bin:$PATH"
   - cask
 env:
-  - EVM_EMACS=emacs-24.4-bin
+  matrix:
+    - EMACS=emacs24
 script:
   make travis-ci
