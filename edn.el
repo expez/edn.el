@@ -255,9 +255,14 @@ tags."
    (t (error "Invalid source!"))))
 
 ;;;###autoload
-(defun edn-list-to-set (l)
-  "Turn a list into `edn''s internal set representation."
-  (edn--create-set l))
+(defun edn-list-to-set (l &optional compare-fn)
+  "Turn a list into `edn''s internal set representation.
+
+If COMPARE-FN is provided this function is used to uniquify the
+list.  Otherwise it's expected that l is without duplicates."
+  (-if-let (-compare-fn compare-fn)
+      (edn--create-set (-distinct l))
+    (edn--create-set l)))
 
 ;;;###autoload
 (defun edn-set-to-list (s)
