@@ -35,6 +35,7 @@
 (require 'dash)
 (require 'cl)
 (require 'peg)
+(require 'subr-x)
 
 (defvar edn--readers (make-hash-table :test #'equal))
 (defvar edn--writers (list))
