@@ -215,6 +215,7 @@
     (edn--read)))
 
 (defun edn--inst-reader (date-string)
+  "Reads the #inst tag."
   (edn-time-to-inst (date-to-time date-string)))
 
 ;;;###autoload
@@ -252,7 +253,7 @@ tags."
   (cond
    ((null source) (edn--read))
    ((stringp source) (edn--read-from-string source))
-   (t (error "Invalid source!"))))
+   (t (error "Source has to be a string, or nil to read from current buffer."))))
 
 ;;;###autoload
 (defun edn-list-to-set (l &optional compare-fn)
