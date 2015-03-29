@@ -33,7 +33,7 @@
 ;;; Code:
 
 (require 'dash)
-(require 'cl)
+(require 'cl-lib)
 (require 'peg)
 (require 'subr-x)
 
@@ -118,7 +118,7 @@
 
 (defun edn--read ()
   (let (discarded)
-    (first
+    (cl-first
      (peg-parse
       (form _ (opt (or elide value err)) _)
       (value (or string char bool integer float symbol keyword list vector map
@@ -222,12 +222,12 @@
 ;;;###autoload
 (defun edn-time-to-inst (time)
   "Turn a `time-date' TIME into our internal representation of an inst."
-  (edn--create-inst (first time) (second time)))
+  (edn--create-inst (cl-first time) (cl-second time)))
 
 ;;;###autoload
 (defun edn-inst-to-time (inst)
   "Turn an `edn-inst', INST, into a TIME from `time-date'."
-  (assert (edn-inst-p inst) nil "INST has to be of type `edn-inst'")
+  (cl-assert (edn-inst-p inst) nil "INST has to be of type `edn-inst'")
   (list (edn-inst-high inst) (edn-inst-low inst)))
 
 ;;;###autoload
@@ -238,7 +238,7 @@
 ;;;###autoload
 (defun edn-uuid-to-string (uuid)
   "Turn our internal representation of a UUID into a string."
-  (assert (edn-uuid-p uuid) nil "UUID has to be of type `edn-uuid'")
+  (cl-assert (edn-uuid-p uuid) nil "UUID has to be of type `edn-uuid'")
   (edn-uuid-uuid uuid))
 
 ;;;###autoload
