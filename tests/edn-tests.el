@@ -121,7 +121,7 @@
   (let ((m (make-hash-table :test #'equal))
         (kv-pairs (-partition 2 keys-and-values)))
     (dolist (pair kv-pairs)
-      (puthash (first pair) (second pair) m))
+      (puthash (car pair) (cadr pair) m))
     m))
 
 (ert-deftest maps ()
@@ -151,7 +151,7 @@
 (defun test-val-passed-to-handler (val)
   (should (listp val))
   (should (= (length val) 2))
-  (should (= 1 (first val)))
+  (should (= 1 (car val)))
   1)
 
 (edn-add-reader "my/type" #'test-val-passed-to-handler)
