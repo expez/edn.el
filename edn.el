@@ -294,7 +294,7 @@ TAG is either a string, symbol or keyword. e.g. :my/type"
 ;;;###autoload
 (defun edn-remove-reader (tag)
   "Remove a previously registered handler for TAG."
-  (puthash (puthash (edn--stringlike-to-string tag) nil edn--readers)))
+  (puthash (edn--stringlike-to-string tag) nil edn--readers))
 
 ;;;###autoload
 (defun edn-remove-writer (writer)
