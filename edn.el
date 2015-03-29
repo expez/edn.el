@@ -319,8 +319,8 @@ TAG is either a string, symbol or keyword. e.g. :my/type"
 
 (cl-defun edn--custom-writer-for (datum)
   (dolist (writer edn--writers)
-    (when (funcall (plist-get writer :pred ) datum)
-      (cl-return (plist-get writer :writer )))))
+    (when (funcall (plist-get writer :pred) datum)
+      (cl-return-from edn--custom-writer-for (plist-get writer :writer)))))
 
 (defun edn--uuid-writer (uuid)
   (concat "#uuid " (edn-uuid-to-string uuid)))
