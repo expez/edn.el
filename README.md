@@ -1,4 +1,4 @@
-# Edn.el
+# Edn.el [![Build Status](https://travis-ci.org/expez/edn.el.png?branch=master)](https://travis-ci.org/expez/edn.el)
 
 Edn.el is an emacs lisp library for reading and writing the data
 format [edn](https://github.com/edn-format/edn).
