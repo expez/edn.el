@@ -38,7 +38,8 @@
 (require 'subr-x)
 
 (defvar edn--readers (make-hash-table :test #'equal))
-(defvar edn--writers (list))
+(defvar edn--writers (list '(:pred edn-inst-p :writer edn--inst-writer)
+                           '(:pred edn-uuid-p :writer edn--uid-writer)))
 
 (defun edn--create-char (match)
   (cond
@@ -347,9 +348,7 @@ your own tagged data."
                       :utc))
 
 (edn-add-reader :inst #'edn--inst-reader)
-(edn-add-writer #'edn-inst-p #'edn--inst-writer)
 (edn-add-reader :uuid #'edn-string-to-uuid)
-(edn-add-writer #'edn-uuid-p #'edn--uuid-writer)
 
 (provide 'edn)
 ;;; edn.el ends here
