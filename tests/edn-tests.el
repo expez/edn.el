@@ -105,10 +105,12 @@
 (ert-deftest vectors ()
   :tags '(edn vectors)
   (should (equal [] (edn-read "[]")))
+  (should (equal [] (edn-read "[ ]")))
   (should (equal '[1 2 3] (edn-read "[ 1 2 3 ]")))
   (should (equal '[12.1 ?a foo :bar] (edn-read "[ 12.1 \\a foo :bar]")))
   (should (equal '[[:foo bar :bar 12]] (edn-read "[[:foo bar :bar 12]]")))
-  (should (equal '[( :foo bar :bar 12 ) "foo"] (edn-read "[(:foo bar :bar 12) \"foo\"]"))))
+  (should (equal '[( :foo bar :bar 12 ) "foo"]
+                 (edn-read "[(:foo bar :bar 12) \"foo\"]"))))
 
 (defun map-equal (m1 m2)
   (and (and (hash-table-p m1) (hash-table-p m2))
@@ -126,6 +128,7 @@
 
 (ert-deftest maps ()
   :tags '(edn maps)
+  (should (hash-table-p (edn-read "{ }")))
   (should (hash-table-p (edn-read "{}")))
   (should (map-equal (make-seeded-hash-table :foo :bar :baz :qux)
                      (edn-read "{ :foo :bar :baz :qux}")))
@@ -135,6 +138,7 @@
 (ert-deftest sets ()
   :tags '(edn sets)
   (should (edn-set-p (edn-read "#{}")))
+  (should (edn-set-p (edn-read "#{ }")))
   (should (equal (edn-list-to-set '(1 2 3)) (edn-read "#{1 2 3}")))
   (should (equal (edn-list-to-set '(1 [1 2 3] 3)) (edn-read "#{1 [1 2 3] 3}"))))
 
@@ -170,7 +174,8 @@
     (should (map-equal (make-seeded-hash-table :foo :bar)
                        (edn-read (edn-print-string (make-seeded-hash-table :foo :bar)))))
     (should (equal (edn-list-to-set '(1 2 3 [3 1.11]))
-                   (edn-read (edn-print-string (edn-list-to-set '(1 2 3 [3 1.11]))))))))
+                   (edn-read (edn-print-string (edn-list-to-set '(1 2 3 [3 1.11]))))))
+    (should-error (edn-parse "#myapp/Person {:first \"Fred\" :last \"Mertz\"}"))))
 
 (ert-deftest inst ()
   :tags '(edn inst)

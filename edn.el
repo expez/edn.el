@@ -172,12 +172,12 @@
             ")" `(l -- (nreverse l)))
 
       (vector "[" `(-- nil)
-              (* _ (or elide value) _ `(-- (edn--maybe-add-to-list)) `(e _ -- e))
-              "]" `(l -- (vconcat (nreverse l))))
+              (* _ (or elide value) `(-- (edn--maybe-add-to-list)) `(e _ -- e))
+              _ "]" `(l -- (vconcat (nreverse l))))
 
       (map "{" `(-- nil)
-           (* _ (or elide value) _ `(-- (edn--maybe-add-to-list)) `(e _ -- e))
-           "}" `(l -- (edn--create-hash-table (nreverse l))))
+           (* _ (or elide value) `(-- (edn--maybe-add-to-list)) `(e _ -- e))
+           _ "}" `(l -- (edn--create-hash-table (nreverse l))))
 
       (set "#{" `(-- nil)
            (* _ (or elide value) `(-- (edn--maybe-add-to-list)) `(e _ -- e))
