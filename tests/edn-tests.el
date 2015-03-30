@@ -28,7 +28,8 @@
   (equal '/ (edn-read "/"))
   (should (equal '.true (edn-read ".true")))
   (should (equal 'some:sort:of:symbol (edn-read "some:sort:of:symbol")))
-  (equal 'foo-bar (edn-read "foo-bar")))
+  (equal 'foo-bar (edn-read "foo-bar"))
+  (should (equal '+some-symbol (edn-parse "+some-symbol"))))
 
 (ert-deftest booleans ()
   :tags '(edn boolean)

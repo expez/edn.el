@@ -143,9 +143,9 @@
       (symbol-no-ns symbol-start (* symbol-constituent))
 
       (keyword (substring keyword-start
-                          (or (and (* symbol-constituent) slash
-                                   (+ symbol-constituent))
-                              (+ symbol-constituent)))
+                          (opt (or (and (* symbol-constituent) slash
+                                        (+ symbol-constituent))
+                                   (+ symbol-constituent))))
                (if terminating) `(kw -- (intern kw)))
       (keyword-start ":" (or alphanum ["*+!-_?$%&=<>#."]))
 
