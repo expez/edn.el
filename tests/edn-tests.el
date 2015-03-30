@@ -29,7 +29,8 @@
   (should (equal '.true (edn-read ".true")))
   (should (equal 'some:sort:of:symbol (edn-read "some:sort:of:symbol")))
   (equal 'foo-bar (edn-read "foo-bar"))
-  (should (equal '+some-symbol (edn-parse "+some-symbol"))))
+  (should (equal '+some-symbol (edn-parse "+some-symbol")))
+  (should (equal '-symbol (edn-parse "-symbol"))))
 
 (ert-deftest booleans ()
   :tags '(edn boolean)
@@ -101,7 +102,10 @@
   (should-not (edn-read "()"))
   (should (equal '(1 2 3) (edn-read "( 1 2 3)")))
   (should (equal '(12.1 ?a foo :bar) (edn-read "(12.1 \\a foo :bar)")))
-  (should (equal '((:foo bar :bar 12)) (edn-read "( (:foo bar :bar 12))"))))
+  (should (equal '((:foo bar :bar 12)) (edn-read "( (:foo bar :bar 12))")))
+  (should (equal
+           '(defproject com\.thortech/data\.edn "0.1.0-SNAPSHOT")
+           (edn-parse "(defproject com.thortech/data.edn \"0.1.0-SNAPSHOT\")"))))
 
 (ert-deftest vectors ()
   :tags '(edn vectors)
@@ -112,9 +116,10 @@
   (should (equal '[[:foo bar :bar 12]] (edn-read "[[:foo bar :bar 12]]")))
   (should (equal '[( :foo bar :bar 12 ) "foo"]
                  (edn-read "[(:foo bar :bar 12) \"foo\"]")))
-  (should
-   (equal '[/ \. * ! _ \? $ % & = - +]
-          (edn-read "[/ . * ! _ ? $ % & = - +]"))))
+  (should (equal '[/ \. * ! _ \? $ % & = - +]
+                 (edn-read "[/ . * ! _ ? $ % & = - +]")))
+  (should (equal [99 newline return space tab]
+                 (edn-read "[\\c \\newline \\return \\space \\tab]"))))
 
 (defun map-equal (m1 m2)
   (and (and (hash-table-p m1) (hash-table-p m2))
@@ -137,7 +142,9 @@
   (should (map-equal (make-seeded-hash-table :foo :bar :baz :qux)
                      (edn-read "{ :foo :bar :baz :qux}")))
   (should (map-equal (make-seeded-hash-table 1 "123" 'vector [1 2 3])
-                     (edn-read "{ 1 \"123\" vector [1 2 3]}"))))
+                     (edn-read "{ 1 \"123\" vector [1 2 3]}")))
+  (should (map-equal (make-seeded-hash-table [1 2 3] "some numbers")
+                     (edn-parse "{[1 2 3] \"some numbers\"}"))))
 
 (ert-deftest sets ()
   :tags '(edn sets)
@@ -154,7 +161,10 @@
   (should (equal [1 2 3] (edn-read "[1 2 ;comment to eol
 3]")))
   (should (equal '[valid more items] (edn-read "[valid;touching trailing comment
- more items]"))))
+ more items]")))
+  (should (equal [valid vector more vector items] (edn-read "[valid vector
+ ;;comment in vector
+ more vector items]"))))
 
 (defun test-val-passed-to-handler (val)
   (should (listp val))
