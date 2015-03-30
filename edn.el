@@ -206,8 +206,8 @@
       (unsupported-bignum (substring (or float1 integer1) (or "N" "M"))
                           terminating
                           `(n -- (error "Unsupported bignum: %s" n)))
-      (err (or unsupported-bignum
-               (substring (+ (any)))) `(s -- (error "Invalid edn: '%s'" s)))))))
+      (err (or unsupported-bignum (substring (+ (any))))
+           `(s -- (error "Invalid edn: '%s'" s) nil))))))
 
 (defun edn--read-from-string (str)
   (with-current-buffer (get-buffer-create "*edn*")
