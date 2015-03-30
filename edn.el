@@ -318,10 +318,11 @@ TAG is either a string, symbol or keyword. e.g. :my/type"
             content
             "}")))
 
-(cl-defun edn--custom-writer-for (datum)
+(cl-defun edn--writer-for (datum)
+  "Checks all registered `edn--writer's to find a writer for DATUM."
   (dolist (writer edn--writers)
     (when (funcall (plist-get writer :pred) datum)
-      (cl-return-from edn--custom-writer-for (plist-get writer :writer)))))
+      (cl-return-from edn--writer-for (plist-get writer :writer)))))
 
 (defun edn--uuid-writer (uuid)
   (concat "#uuid " (edn-uuid-to-string uuid)))
@@ -334,7 +335,7 @@ You can use `edn-add-writer' to add writers capable of writing
 your own tagged data."
   (cond
    ((null datum) "nil")
-   ((edn--custom-writer-for datum) (funcall (edn--custom-writer-for datum) datum))
+   ((edn--writer-for datum) (funcall (edn--writer-for datum) datum))
    ((edn-set-p datum) (edn--print-seq "#{" "}" (edn-set-to-list datum)))
    ((listp datum) (edn--print-seq "(" ")" datum))
    ((vectorp datum) (edn--print-seq "[" "]" datum))
