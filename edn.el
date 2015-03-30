@@ -136,7 +136,7 @@
       (additional-symbol-chars ["*+!-_?$%&=<>:#."])
       (symbol-constituent (or alphanum additional-symbol-chars))
       (symbol-start (or alpha ["*!_?$%&=<>."]
-                        (and (or "-" "+") (or alpha additional-symbol-chars))))
+                        (and (or "-" "+") (* (or alpha additional-symbol-chars)))))
       (slash "/")
       (symbol-with-prefix symbol-start (* symbol-constituent) slash
                           (+ symbol-constituent))

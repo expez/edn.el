@@ -110,7 +110,10 @@
   (should (equal '[12.1 ?a foo :bar] (edn-read "[ 12.1 \\a foo :bar]")))
   (should (equal '[[:foo bar :bar 12]] (edn-read "[[:foo bar :bar 12]]")))
   (should (equal '[( :foo bar :bar 12 ) "foo"]
-                 (edn-read "[(:foo bar :bar 12) \"foo\"]"))))
+                 (edn-read "[(:foo bar :bar 12) \"foo\"]")))
+  (should
+   (equal '[/ \. * ! _ \? $ % & = - +]
+          (edn-read "[/ . * ! _ ? $ % & = - +]"))))
 
 (defun map-equal (m1 m2)
   (and (and (hash-table-p m1) (hash-table-p m2))
