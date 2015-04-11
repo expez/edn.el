@@ -125,7 +125,10 @@
       (value (or string char bool integer float symbol keyword list vector map
                  set tagged-value))
 
-      (char (substring "\\" (+ alphanum))
+      (char (substring "\\" (or "newline" "return" "space" "tab"
+                                (and "u" alphanum alphanum alphanum alphanum)
+                                alphanum))
+            (if terminating)
             `(c -- (edn--create-char c)))
 
       (bool (substring (or "true" "false"))
@@ -135,17 +138,22 @@
               (if terminating) `(symbol -- (intern symbol)))
       (additional-symbol-chars ["*+!-_?$%&=<>:#."])
       (symbol-constituent (or alphanum additional-symbol-chars))
-      (symbol-start (or alpha ["*!_?$%&=<>."]
-                        (and (or "-" "+") (* (or alpha additional-symbol-chars)))))
+      (symbol-start (or alpha ["*!_?$%&=<>"]
+                        (and (or "-" "+" ".") (not integer1)
+                             (* (or alpha additional-symbol-chars)))))
       (slash "/")
       (symbol-with-prefix symbol-start (* symbol-constituent) slash
                           (+ symbol-constituent))
       (symbol-no-ns symbol-start (* symbol-constituent))
 
-      (keyword (substring keyword-start
-                          (opt (or (and (* symbol-constituent) slash
-                                        (+ symbol-constituent))
-                                   (+ symbol-constituent))))
+      (keyword-with-prefix keyword-start (* symbol-constituent) slash
+                           (or (and (or symbol-start "#")
+                                    (* symbol-constituent))
+                               (and ":" (+ symbol-constituent))))
+
+      (keyword-no-ns keyword-start (opt (+ symbol-constituent)))
+
+      (keyword (substring (or keyword-with-prefix keyword-no-ns))
                (if terminating) `(kw -- (intern kw)))
       (keyword-start ":" (or alphanum ["*+!-_?$%&=<>#."]))
 
