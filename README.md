@@ -28,7 +28,7 @@ It's available on [melpa](http://melpa.milkbox.net/):
 ;; => (1 2 3)
 
 (defvar time (edn-inst-to-time (edn-read "#inst \"1985-04-12T23:20:50.52Z\"")))
-;; => (7357 47698)
+;; => (7357 47698) ; a time object as found in `time-date.el'
 (edn-inst-p (edn-time-to-inst time))
 ;; => t
 
@@ -69,6 +69,8 @@ I've chosen to take the third approach.
 ### Time instances and UUIDs
 
 The problem of representation also arises with regard to instants in time and UUIDs.  I've opted to create an internal representation here as well.
+
+Functions are provided to convert between `edn-time` and the repesentation used in `time-date.el`.
 
 ### Bignums
 
