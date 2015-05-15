@@ -3,7 +3,7 @@
 ;; Author: Lars Andersen <expez@expez.com>
 ;; URL: https://www.github.com/expez/edn.el
 ;; Keywords: edn clojure
-;; Version: 1.0
+;; Version: 1.1
 ;; Package-Requires: ((cl-lib "0.3") (emacs "24.1") (dash "2.10.0") (peg "20130320.158") (s "1.8.0"))
 
 ;; Copyright (c)  2015, Lars Andersen
