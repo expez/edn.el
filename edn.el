@@ -4,7 +4,7 @@
 ;; URL: https://www.github.com/expez/edn.el
 ;; Keywords: edn clojure
 ;; Version: 1.0
-;; Package-Requires: ((cl-lib "0.3") (emacs "24.4") (dash "2.10.0") (peg "20130320.158"))
+;; Package-Requires: ((cl-lib "0.3") (emacs "24.1") (dash "2.10.0") (peg "20130320.158") (s "1.8.0"))
 
 ;; Copyright (c)  2015, Lars Andersen
 
@@ -35,7 +35,7 @@
 (require 'dash)
 (require 'cl-lib)
 (require 'peg)
-(require 'subr-x)
+(require 's)
 
 (defvar edn--readers (make-hash-table :test #'equal))
 (defvar edn--writers (list '(:pred edn-inst-p :writer edn--inst-writer)
@@ -43,7 +43,7 @@
 
 (defun edn--create-char (match)
   (cond
-   ((string-prefix-p "\\u" match) (read (format "?%s" match))) ; unicode
+   ((s-prefix-p "\\u" match) (read (format "?%s" match))) ; unicode
    ((= (length match) 2) (string-to-char (substring match 1))) ; chars like \a
    (t (intern (substring match 1))))) ; chars like \newline
 
@@ -314,7 +314,21 @@ TAG is either a string, symbol or keyword. e.g. :my/type"
                  edn--writers)))
 
 (defun edn--print-seq (open close values)
-  (concat open (string-join (mapcar #'edn-print-string values) " ") close))
+  (concat open (s-join  " " (mapcar #'edn-print-string values)) close))
+
+;; NOTE: inlined from `subr-x' to support 24.3
+(defsubst hash-table-keys (hash-table)
+  "Return a list of keys in HASH-TABLE."
+  (let ((keys '()))
+    (maphash (lambda (k _v) (push k keys)) hash-table)
+    keys))
+
+;; NOTE: inlined from `subr-x' to support 24.3
+(defsubst hash-table-values (hash-table)
+  "Return a list of values in HASH-TABLE."
+  (let ((values '()))
+    (maphash (lambda (_k v) (push v values)) hash-table)
+    values))
 
 (defun edn--print-hash-map (m)
   (let ((keys (hash-table-keys m))
