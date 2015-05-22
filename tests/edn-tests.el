@@ -66,8 +66,8 @@
   (should (equal "this is a string" (edn-read "\"this is a string\"")))
   (should (equal "this has an escaped \"quote in it"
                  (edn-read "\"this has an escaped \\\"quote in it\"")))
-  (should (equal "foo\\tbar" (edn-read "\"foo\\tbar\"")))
-  (should (equal "foo\\nbar" (edn-read "\"foo\\nbar\"")))
+  (should (equal "foo\tbar" (edn-read "\"foo\\tbar\"")))
+  (should (equal "foo\nbar" (edn-read "\"foo\\nbar\"")))
   (should (equal "this is a string \\ that has an escaped backslash"
                  (edn-read "\"this is a string \\\\ that has an escaped backslash\"")))
   (should (equal "[" (edn-read "\"[\""))))
