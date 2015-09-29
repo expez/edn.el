@@ -319,8 +319,8 @@ TAG is either a string, symbol or keyword. e.g. :my/type"
         (content ""))
     (concat "{"
             (dolist (k keys)
-              (setq content (concat content " " (edn-print-string k) " "
-                                    (edn-print-string (gethash k m)))))
+              (setq content (s-trim (concat content " " (edn-print-string k) " "
+                                            (edn-print-string (gethash k m))))))
             content
             "}")))
 
