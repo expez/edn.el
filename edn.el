@@ -4,7 +4,7 @@
 ;; URL: https://www.github.com/expez/edn.el
 ;; Keywords: edn clojure
 ;; Version: 1.1.2
-;; Package-Requires: ((cl-lib "0.3") (emacs "24.1") (dash "2.10.0") (peg "0.6") (s "1.8.0"))
+;; Package-Requires: ((cl-lib "0.3") (emacs "24.1") (dash "2.10.0") (peg "0.6"))
 
 ;; Copyright (c)  2015, Lars Andersen
 
@@ -35,7 +35,6 @@
 (require 'dash)
 (require 'cl-lib)
 (require 'peg)
-(require 's)
 
 (defvar edn--readers (make-hash-table :test #'equal))
 (defvar edn--writers (list '(:pred edn-inst-p :writer edn--inst-writer)
@@ -43,12 +42,12 @@
 
 (defun edn--create-char (match)
   (cond
-   ((s-prefix-p "\\u" match) (read (format "?%s" match))) ; unicode
+   ((string-match "\\`\\\\u" match) (read (format "?%s" match))) ; unicode
    ((= (length match) 2) (string-to-char (substring match 1))) ; chars like \a
    (t (intern (substring match 1))))) ; chars like \newline
 
 (defun edn--create-string (match)
-  (read (s-concat "\"" match "\"")))
+  (read (concat "\"" match "\"")))
 
 (defun edn--maybe-add-to-list ()
   (if (not discarded)
@@ -298,7 +297,7 @@ TAG is either a string, symbol or keyword. e.g. :my/type"
                  edn--writers)))
 
 (defun edn--print-seq (open close values)
-  (concat open (s-join  " " (mapcar #'edn-print-string values)) close))
+  (concat open (mapconcat #'edn-print-string values " ") close))
 
 ;; NOTE: inlined from `subr-x' to support 24.3
 (defsubst hash-table-keys (hash-table)
@@ -319,8 +318,10 @@ TAG is either a string, symbol or keyword. e.g. :my/type"
         (content ""))
     (concat "{"
             (dolist (k keys)
-              (setq content (s-trim (concat content " " (edn-print-string k) " "
-                                            (edn-print-string (gethash k m))))))
+              (setq content (replace-regexp-in-string
+                             "\\`[ \t\n\r]+\\|[ \t\n\r]+\\'" ""
+                             (concat content " " (edn-print-string k) " "
+                                     (edn-print-string (gethash k m))))))
             content
             "}")))
 
