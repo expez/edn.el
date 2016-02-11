@@ -4,7 +4,7 @@
 ;; URL: https://www.github.com/expez/edn.el
 ;; Keywords: edn clojure
 ;; Version: 1.1.2
-;; Package-Requires: ((cl-lib "0.3") (emacs "24.1") (dash "2.10.0") (peg "0.6"))
+;; Package-Requires: ((cl-lib "0.3") (emacs "24.1") (peg "0.6"))
 
 ;; Copyright (c)  2015, Lars Andersen
 
@@ -32,7 +32,6 @@
 
 ;;; Code:
 
-(require 'dash)
 (require 'cl-lib)
 (require 'peg)
 
@@ -90,9 +89,10 @@
   uuid)
 
 (defun edn--create-tagged-value (tag value)
-  (-if-let (reader (gethash tag edn--readers))
-      (funcall reader value)
-    (error "Don't know how to read tag '%s'" tag)))
+  (let ((reader (gethash tag edn--readers)))
+    (if reader
+        (funcall reader value)
+      (error "Don't know how to read tag '%s'" tag))))
 
 (defun edn--stringlike-to-string (stringlike)
   (cond ((stringp stringlike) stringlike)
@@ -254,8 +254,8 @@ tags."
 
 If COMPARE-FN is provided this function is used to uniquify the
 list.  Otherwise it's expected that l is without duplicates."
-  (-if-let (-compare-fn compare-fn)
-      (edn--create-set (-distinct l))
+  (if compare-fn
+      (edn--create-set (cl-remove-duplicates l :test compare-fn))
     (edn--create-set l)))
 
 ;;;###autoload
@@ -292,9 +292,9 @@ TAG is either a string, symbol or keyword. e.g. :my/type"
 (defun edn-remove-writer (writer)
   "The remove the writer WRITER."
   (setq edn--writers
-        (-remove (lambda (writer-meta)
-                   (function-equal writer (plist-get writer-meta :writer)))
-                 edn--writers)))
+        (cl-remove-if (lambda (writer-meta)
+                        (function-equal writer (plist-get writer-meta :writer)))
+                      edn--writers)))
 
 (defun edn--print-seq (open close values)
   (concat open (mapconcat #'edn-print-string values " ") close))
